@@ -80,6 +80,9 @@ async function initApp() {
         }
         await chatManager.initialize();
         
+        // Reset conversation history to ensure clean start
+        chatManager.resetConversation();
+        
         // Hide loading overlay
         loadingOverlay?.classList.add('hidden');
         
@@ -112,6 +115,9 @@ async function initApp() {
                 sendMessage();
             }
         });
+        
+        // Set up save button
+        chatManager.setupSaveButton();
         
         // Focus input
         chatInput.focus();

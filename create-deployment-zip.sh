@@ -24,6 +24,10 @@ cp index.html "$DEPLOY_DIR/"
 cp server.js "$DEPLOY_DIR/"
 cp start.js "$DEPLOY_DIR/"
 cp README.md "$DEPLOY_DIR/"
+cp CLAUDE.md "$DEPLOY_DIR/"
+cp start-server.sh "$DEPLOY_DIR/"
+cp stop-server.sh "$DEPLOY_DIR/"
+cp .gitignore "$DEPLOY_DIR/"
 
 # Create deployment scripts
 echo "🔧 Creating deployment scripts..."

@@ -41,6 +41,7 @@ Comprehensive Playwright test suite covering:
 - ✅ Device capability detection and fallback
 - ✅ Model loading and initialization  
 - ✅ Chat interaction and streaming
+- ✅ Real-time timer on send button during generation  
 - ✅ Conversation context maintenance
 - ✅ Error handling and recovery
 
@@ -68,8 +69,8 @@ gemma-chat-app/
 │   ├── main.ts           # App entry + WebGPU detection
 │   ├── chatManager.ts    # Chat coordination
 │   └── modelWorker.ts    # Gemma inference worker
-├── tests/
-│   └── gemma-chat.spec.ts # WebGPU test suite
+├── start-server.sh        # Server startup script
+├── stop-server.sh         # Server shutdown script
 ├── start.js              # NPX entry point
 ├── index.html            # Single page app
 └── vite.config.ts        # WebGPU headers config

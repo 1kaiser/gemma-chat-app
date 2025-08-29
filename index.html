@@ -131,47 +131,6 @@
             border: 1px solid #e5e7eb;
         }
         
-        .typing-indicator {
-            display: none;
-            align-self: flex-start;
-            padding: 16px 20px;
-            background: white;
-            border-radius: 16px;
-            max-width: 75%;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .typing-indicator.active {
-            display: block;
-        }
-        
-        .typing-indicator span {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #666;
-            margin: 0 2px;
-            animation: typing 1.4s infinite;
-        }
-        
-        .typing-indicator span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .typing-indicator span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
-        @keyframes typing {
-            0%, 60%, 100% {
-                transform: translateY(0);
-            }
-            30% {
-                transform: translateY(-10px);
-            }
-        }
         
         @keyframes fadeIn {
             from {
@@ -230,6 +189,44 @@
         #sendButton:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+        
+        #stopButton {
+            padding: 14px 20px;
+            background: #dc2626;
+            color: white;
+            border: 1px solid #b91c1c;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            margin-left: 8px;
+        }
+        
+        #stopButton:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+        
+        #saveButton {
+            padding: 10px 16px;
+            background: #059669;
+            color: white;
+            border: 1px solid #047857;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+        
+        #saveButton:hover {
+            background: #047857;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
         }
         
         .loading-overlay {
@@ -426,12 +423,6 @@
             </div>
         </div>
         
-        <div class="typing-indicator" id="typingIndicator">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-        
         <div class="input-container">
             <input 
                 type="text" 
@@ -440,6 +431,8 @@
                 disabled
             />
             <button id="sendButton" disabled>Send</button>
+            <button id="stopButton" style="display: none;">Stop</button>
+            <button id="saveButton">💾 Save Chat</button>
         </div>
     </div>
     

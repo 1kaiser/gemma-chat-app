@@ -8,6 +8,9 @@ let isInitialized = false;
 // Message history for context
 let messageHistory: Array<{ role: string; content: string }> = [];
 
+// Reset message history when worker starts
+messageHistory = [];
+
 // Initialize the model
 async function initializeModel() {
     if (isInitialized) return;
@@ -87,16 +90,16 @@ async function generateResponse(userMessage: string) {
     }
     
     try {
-        // Add user message to history
-        messageHistory.push({ role: 'user', content: userMessage });
+        // Create a clean conversation for this generation
+        // Don't add to persistent history until we get a response
+        const tempHistory = [...messageHistory, { role: 'user', content: userMessage }];
         
-        // Keep only last 10 messages for context (5 exchanges)
-        if (messageHistory.length > 10) {
-            messageHistory = messageHistory.slice(-10);
-        }
+        // Keep only last 6 messages for context (3 exchanges max)
+        const messages = tempHistory.slice(-6);
         
-        // Create conversation context
-        const messages = [...messageHistory];
+        // Debug: log the conversation structure
+        console.log('Conversation structure:', messages.map(m => m.role).join(' -> '));
+        console.log('Message count:', messages.length);
         
         // Create text streamer for real-time output
         const streamer = new TextStreamer(generator.tokenizer, {
@@ -111,8 +114,21 @@ async function generateResponse(userMessage: string) {
             }
         });
         
-        // Generate response
-        const output = await generator(messages, {
+        // Format messages as a single prompt for Gemma
+        let prompt = '';
+        for (const msg of messages) {
+            if (msg.role === 'user') {
+                prompt += `User: ${msg.content}\n`;
+            } else if (msg.role === 'assistant') {
+                prompt += `Assistant: ${msg.content}\n`;
+            }
+        }
+        prompt += 'Assistant: '; // Prompt for the next assistant response
+        
+        console.log('Generated prompt:', prompt.slice(-200)); // Log last 200 chars
+        
+        // Generate response using formatted prompt
+        const output = await generator(prompt, {
             max_new_tokens: 256,
             temperature: 0.7,
             top_p: 0.95,
@@ -120,11 +136,29 @@ async function generateResponse(userMessage: string) {
             streamer
         });
         
-        // Extract generated text
-        const generatedText = output[0].generated_text[messages.length].content;
+        // Extract generated text from string output
+        let generatedText = '';
+        if (output[0].generated_text) {
+            // Remove the input prompt to get only the generated part
+            const fullText = output[0].generated_text;
+            const generatedPart = fullText.slice(prompt.length);
+            generatedText = generatedPart.trim();
+        }
         
-        // Add assistant message to history
+        if (!generatedText) {
+            generatedText = "I apologize, but I couldn't generate a response.";
+        }
+        
+        console.log('Extracted response:', generatedText.slice(0, 100));
+        
+        // Now add both user and assistant messages to persistent history
+        messageHistory.push({ role: 'user', content: userMessage });
         messageHistory.push({ role: 'assistant', content: generatedText });
+        
+        // Keep only last 10 messages for context (5 exchanges)
+        if (messageHistory.length > 10) {
+            messageHistory = messageHistory.slice(-10);
+        }
         
         // Send completion message
         self.postMessage({ type: 'complete' });
@@ -154,6 +188,13 @@ self.addEventListener('message', async (event: MessageEvent) => {
         case 'reset':
             messageHistory = [];
             self.postMessage({ type: 'reset_complete' });
+            break;
+            
+        case 'stop':
+            // Handle stop generation request
+            // Note: For now we'll just clear the history to prevent further processing
+            // In a more advanced implementation, we could interrupt the generation
+            self.postMessage({ type: 'stopped' });
             break;
             
         default:
