@@ -209,8 +209,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(248, 250, 252, 0.95);
-            backdrop-filter: blur(8px);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            backdrop-filter: blur(12px);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -219,14 +219,40 @@
             z-index: 1000;
         }
         
+        .loading-card {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            margin: 20px;
+        }
+        
+        .loading-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #1f2937;
+        }
+        
+        .loading-subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+        
         .loading-overlay.hidden {
             display: none;
         }
         
         .progress-ring {
-            width: 120px;
-            height: 120px;
-            margin-top: 20px;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 24px;
             position: relative;
         }
         
@@ -238,7 +264,7 @@
         
         .progress-ring-background {
             fill: none;
-            stroke: rgba(255, 255, 255, 0.2);
+            stroke: #e5e7eb;
             stroke-width: 8;
         }
         
@@ -257,9 +283,27 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .loading-features {
+            margin-top: 24px;
+            text-align: left;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .feature-icon {
+            margin-right: 12px;
+            font-size: 16px;
         }
         
         .error-message {
@@ -276,20 +320,42 @@
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay">
-        <h2>🤖 Loading Gemma 3 270M...</h2>
-        <p id="loadingStatus">Initializing device capabilities...</p>
-        <div class="progress-ring">
-            <svg viewBox="0 0 120 120">
-                <defs>
-                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
-                    </linearGradient>
-                </defs>
-                <circle class="progress-ring-background" cx="60" cy="60" r="50"/>
-                <circle class="progress-ring-fill" id="progressRingFill" cx="60" cy="60" r="50"/>
-            </svg>
-            <div class="progress-percentage" id="progressPercentage" style="color: #1f2937;">0%</div>
+        <div class="loading-card">
+            <h2 class="loading-title">🤖 Gemma 3 Chat</h2>
+            <p class="loading-subtitle" id="loadingStatus">Initializing device capabilities...</p>
+            
+            <div class="progress-ring">
+                <svg viewBox="0 0 120 120">
+                    <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-ring-background" cx="60" cy="60" r="50"/>
+                    <circle class="progress-ring-fill" id="progressRingFill" cx="60" cy="60" r="50"/>
+                </svg>
+                <div class="progress-percentage" id="progressPercentage">0%</div>
+            </div>
+            
+            <div class="loading-features">
+                <div class="feature-item">
+                    <span class="feature-icon">🚀</span>
+                    <span>Universal browser support with WebGPU/WASM fallback</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔒</span>
+                    <span>Complete privacy - all processing happens locally</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">⚡</span>
+                    <span>270M parameter model optimized for speed</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🌐</span>
+                    <span>No internet required after initial load</span>
+                </div>
+            </div>
         </div>
     </div>
 
