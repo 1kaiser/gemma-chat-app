@@ -1,6 +1,57 @@
-# 🌟 Gemma Chat App
+# 🪩 Gemma 3 270M - Universal Browser AI 🪩
+
+![Gemma 3 270M Architecture](https://media.datacamp.com/cms/ad_4nxek_-toj_myxu_5eeswj3gudwo5cnych58gtapqmbpelummo-aqiflmyq25ds_cb6uqzutywrseyeo52xx1twwgyzjqosushqzm98awhj19ukum21owg0uammanu3kzvae_bv6ohg.png)
 
 A simple browser-based chat application using **Gemma 270M** with **automatic WebGPU/WASM fallback**, **Transformers.js**, and **Web Workers** for a fully local AI chat experience that works in any modern browser.
+
+## 🧠 About Gemma 3 270M
+
+Gemma 3 270M is a compact and efficient AI model from Google's Gemma 3 family, featuring 270 million parameters. It is engineered for fast, task-specific fine-tuning without the need for powerful hardware, making it ideal for on-device applications.
+
+The model's architecture is noteworthy: 170 million parameters are allocated to a vast 256,000-token vocabulary, while the remaining 100 million parameters power its transformer blocks. This structure provides a robust foundation for fine-tuning across various languages and specialized fields. Gemma 3 270M is available in both pre-trained and instruction-tuned versions, excelling at targeted tasks such as text classification, entity extraction, and structured text generation, rather than general, open-ended conversations. It's a text-only model and does not support image input.
+
+### Model Architecture Overview
+
+```
+            +---------------------------+
+            |      Gemma 3 270M         |
+            +---------------------------+
+                   |
+                   V
++----------------------------------------------------+
+|               Compact & Efficient AI Model         |
++----------------------------------------------------+
+|                                                    |
+|   +-----------------+   +------------------------+ |
+|   |  Architecture   |   |      Key Features      | |
+|   +-----------------+   +------------------------+ |
+|   |                 |   |                        | |
+|   | 270M Parameters |-->|--> Small & Lightweight  | |
+|   |   - 170M Vocab  |   |--> Specialized Tasks   | |
+|   |   - 100M Core   |   |--> Power Efficient      | |
+|   |                 |   |--> Large Vocabulary    | |
+|   +-----------------+   +------------------------+ |
+|                                                    |
++----------------------------------------------------+
+                   |
+                   V
++----------------------------------------------------+
+|                  Ideal For                         |
++----------------------------------------------------+
+|                                                    |
+|  - On-Device AI (Mobile Phones)                    |
+|  - Text Classification                             |
+|  - Data Extraction                                 |
+|  - Fine-tuning for specific domains                |
+|                                                    |
++----------------------------------------------------+
+```
+
+**Sources:**
+- [Google Developers Blog - Introducing Gemma 3 270M](https://developers.googleblog.com/en/introducing-gemma-3-270m/)
+- [Gemma 3 - Google DeepMind](https://deepmind.google/models/gemma/gemma-3/)
+- [HuggingFace - google/gemma-3-270m](https://huggingface.co/google/gemma-3-270m)
+- [DataCamp - Gemma 3 270M Guide](https://www.datacamp.com/tutorial/gemma-3-270m)
 
 ## ✨ Features
 

@@ -119,7 +119,7 @@ export class ChatManager {
         
         // Update status
         if (this.statusElement) {
-            this.statusElement.textContent = '✅ Ready';
+            this.statusElement.textContent = 'Response complete';
         }
         
         // Re-enable input

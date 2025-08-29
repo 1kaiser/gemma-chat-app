@@ -49,7 +49,7 @@ async function startServer() {
 
     const networkIP = getNetworkIP();
     const server = app.listen(3001, '0.0.0.0', () => {
-        console.log('\n🌟 Gemma Chat Server Started!');
+        console.log('\n🌟 Gemma 3 270M Server Started!');
         console.log('🌐 Local: http://localhost:3001');
         console.log(`🌐 Network: http://${networkIP}:3001`);
         console.log('🔌 Shutdown: Click the shutdown button in the UI');

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemma 3 Chat - Universal Browser AI</title>
+    <title>🪩 Gemma 3 270M - Universal Browser AI 🪩</title>
     <style>
         * {
             margin: 0;
@@ -350,7 +350,7 @@
 <body>
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-card">
-            <h2 class="loading-title">🪩 Gemma 3 Chat 🪩</h2>
+            <h2 class="loading-title">🪩 Gemma 3 270M 🪩</h2>
             <p class="loading-subtitle" id="loadingStatus">Initializing device capabilities...</p>
             
             <div class="progress-ring">
@@ -378,7 +378,7 @@
                 </div>
                 <div class="feature-item">
                     <span class="feature-icon">⚡</span>
-                    <span>270M parameter model optimized for speed</span>
+                    <span>170M embedding + 100M transformer parameters with 256k token vocabulary</span>
                 </div>
                 <div class="feature-item">
                     <span class="feature-icon">🌐</span>
@@ -390,11 +390,8 @@
 
     <div class="container">
         <div class="header">
-            <h1>🪩 Gemma 3 Chat 🪩</h1>
+            <h1>🪩 <a href="https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX" target="_blank" style="color: inherit; text-decoration: none;">Gemma 3 270M</a> 🪩</h1>
             <div class="status" id="status">Universal Browser Support + Transformers.js + Web Workers</div>
-            <a href="https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX" target="_blank" class="source-link">
-                📚 Model: onnx-community/gemma-3-270m-it-ONNX
-            </a>
             <button id="shutdownButton" style="position: absolute; top: 15px; right: 15px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
                 🔌 Shutdown
             </button>
@@ -425,7 +422,7 @@
         
         <div id="chatMessages">
             <div class="message ai-message">
-                👋 Hello! I'm Gemma 3, running entirely in your browser with automatic WebGPU/WASM fallback. Ask me anything!
+                👋 Hello! I'm Gemma 3 270M, running entirely in your browser with automatic WebGPU/WASM fallback. Ask me anything!
             </div>
         </div>
         

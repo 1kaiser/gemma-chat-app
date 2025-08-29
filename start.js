@@ -3,7 +3,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('🌟 Starting Gemma Chat App with WebGPU support...');
+console.log('🪩 Starting Gemma 3 270M with WebGPU support... 🪩');
 console.log('📦 Installing dependencies...');
 
 // First install dependencies
@@ -37,7 +37,7 @@ install.on('close', (code) => {
   });
   
   dev.on('close', (code) => {
-    console.log('👋 Gemma Chat App stopped');
+    console.log('👋 Gemma 3 270M stopped');
     process.exit(code);
   });
 });

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Gemma Chat Server Shutdown Script
-echo "🔌 Stopping Gemma Chat Server..."
+# Gemma 3 270M Server Shutdown Script
+echo "🔌 Stopping Gemma 3 270M Server..."
 echo "================================"
 
 # Find and kill processes on port 3001

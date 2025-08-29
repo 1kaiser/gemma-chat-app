@@ -34,7 +34,9 @@ async function initApp() {
     
     try {
         // Check WebGPU support (but don't fail if not available)
-        loadingStatus!.textContent = 'Checking device capabilities...';
+        if (loadingStatus) {
+            loadingStatus.textContent = 'Checking device capabilities...';
+        }
         const hasWebGPU = await checkWebGPUSupport();
         
         if (hasWebGPU) {
@@ -44,7 +46,9 @@ async function initApp() {
         }
         
         // Initialize chat manager
-        loadingStatus!.textContent = 'Initializing chat system...';
+        if (loadingStatus) {
+            loadingStatus.textContent = 'Initializing chat system...';
+        }
         const chatManager = new ChatManager();
         
         // Set up progress callback
@@ -71,7 +75,9 @@ async function initApp() {
         };
         
         // Initialize the model
-        loadingStatus!.textContent = 'Loading Gemma 270M model...';
+        if (loadingStatus) {
+            loadingStatus.textContent = 'Loading Gemma 270M model...';
+        }
         await chatManager.initialize();
         
         // Hide loading overlay
@@ -80,7 +86,9 @@ async function initApp() {
         // Enable input
         chatInput.disabled = false;
         sendButton.disabled = false;
-        statusElement!.textContent = '✅ Ready - Model loaded successfully';
+        if (statusElement) {
+            statusElement.textContent = 'Universal Browser Support + Transformers.js + Web Workers';
+        }
         
         // Set up event handlers
         const sendMessage = async () => {
@@ -122,7 +130,7 @@ async function initApp() {
             // Set model status
             const modelStatus = document.getElementById('modelStatus');
             if (modelStatus) {
-                modelStatus.textContent = 'Ready';
+                modelStatus.textContent = 'Loaded';
             }
             
             // Start resource monitoring
@@ -140,7 +148,9 @@ async function initApp() {
         errorDiv.textContent = `Error: ${error instanceof Error ? error.message : 'Failed to initialize'}`;
         document.querySelector('.container')?.prepend(errorDiv);
         
-        statusElement!.textContent = '❌ Failed to load model';
+        if (statusElement) {
+            statusElement.textContent = '❌ Failed to load model';
+        }
     }
 }
 

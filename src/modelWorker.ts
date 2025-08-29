@@ -53,7 +53,7 @@ async function initializeModel() {
                             type: 'progress',
                             data: {
                                 progress: 100,
-                                message: 'Model loaded successfully!'
+                                message: 'Initialization complete!'
                             }
                         });
                     }

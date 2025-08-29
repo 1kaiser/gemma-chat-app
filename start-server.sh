@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Gemma Chat Server Startup Script
-echo "🌟 Starting Gemma Chat Server..."
+# Gemma 3 270M Server Startup Script
+echo "🪩 Starting Gemma 3 270M Server... 🪩"
 echo "================================"
 
 # Check if node_modules exists
