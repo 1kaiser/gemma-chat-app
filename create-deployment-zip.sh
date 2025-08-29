@@ -1,10 +1,10 @@
 #!/bin/bash
-# Create deployment ZIP package for Gemma Chat App
+# Create deployment ZIP package for Gemma 3 270M
 # Usage: ./create-deployment-zip.sh
 
 set -e
 
-echo "📦 Creating Gemma Chat App deployment package..."
+echo "📦 Creating Gemma 3 270M deployment package..."
 
 # Create deployment directory
 DEPLOY_DIR="gemma-chat-deployment"
@@ -14,12 +14,12 @@ mkdir -p "$DEPLOY_DIR"
 # Copy essential files (exclude node_modules and build artifacts)
 echo "📋 Copying project files..."
 cp -r src/ "$DEPLOY_DIR/"
-cp -r tests/ "$DEPLOY_DIR/"
+# cp -r tests/ "$DEPLOY_DIR/" # Tests directory removed from repo
 cp package.json "$DEPLOY_DIR/"
 cp package-lock.json "$DEPLOY_DIR/"
 cp tsconfig.json "$DEPLOY_DIR/"
 cp vite.config.ts "$DEPLOY_DIR/"
-cp playwright.config.ts "$DEPLOY_DIR/"
+# cp playwright.config.ts "$DEPLOY_DIR/" # Playwright config not needed for deployment
 cp index.html "$DEPLOY_DIR/"
 cp server.js "$DEPLOY_DIR/"
 cp start.js "$DEPLOY_DIR/"
@@ -31,12 +31,12 @@ echo "🔧 Creating deployment scripts..."
 # One-liner installer script
 cat > "$DEPLOY_DIR/install-and-run.sh" << 'EOF'
 #!/bin/bash
-# Gemma Chat App - One-Line Installer
+# Gemma 3 270M - One-Line Installer
 # Usage: ./install-and-run.sh
 
 set -e
 
-echo "🚀 Gemma Chat App - Quick Start"
+echo "🪩 Gemma 3 270M - Quick Start 🪩"
 echo "=============================="
 
 # Check dependencies
@@ -74,7 +74,7 @@ fi
 
 # Start the application
 echo ""
-echo "🌐 Starting Gemma Chat App..."
+echo "🌐 Starting Gemma 3 270M..."
 echo "🎯 Server: http://localhost:3001"
 echo "🧠 First model load: 30-120 seconds"
 echo "⚡ Cached loads: 5-15 seconds"
@@ -92,7 +92,7 @@ EOF
 # Windows batch file
 cat > "$DEPLOY_DIR/install-and-run.bat" << 'EOF'
 @echo off
-echo 🚀 Gemma Chat App - Quick Start (Windows)
+echo 🪩 Gemma 3 270M - Quick Start (Windows) 🪩
 echo =========================================
 
 REM Check Node.js
@@ -117,7 +117,7 @@ if %errorlevel% neq 0 (
 
 REM Start application
 echo.
-echo 🌐 Starting Gemma Chat App...
+echo 🌐 Starting Gemma 3 270M...
 echo 🎯 Server: http://localhost:3001
 echo 🧠 First model load: 30-120 seconds
 echo ⚡ Cached loads: 5-15 seconds
@@ -133,7 +133,7 @@ chmod +x "$DEPLOY_DIR/install-and-run.sh"
 
 # Create README for deployment
 cat > "$DEPLOY_DIR/DEPLOYMENT-README.md" << 'EOF'
-# Gemma Chat App - Deployment Package
+# 🪩 Gemma 3 270M - Deployment Package 🪩
 
 ## 🚀 One-Line Quick Start
 
