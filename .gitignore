@@ -12,6 +12,9 @@ test-results/
 playwright-report/
 playwright/.cache/
 coverage/
+tests/
+*.spec.ts
+playwright.config.ts
 
 # Environment
 .env
@@ -61,3 +64,11 @@ Desktop.ini
 *.backup
 *.bak
 *.old
+
+# Deployment packages
+*.zip
+deploy.sh
+install-*.sh
+
+# Legacy/unused files
+gemma-chat-deployment.zip
