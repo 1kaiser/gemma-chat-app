@@ -39,7 +39,8 @@ async function initializeModel() {
                 ...deviceConfig,
                 progress_callback: (progress: any) => {
                     if (progress.status === 'progress') {
-                        const percent = Math.round((progress.progress || 0) * 100);
+                        // progress.progress is already a percentage (0-100), not a decimal (0-1)
+                        const percent = Math.round(progress.progress || 0);
                         self.postMessage({
                             type: 'progress',
                             data: {
