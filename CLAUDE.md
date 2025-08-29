@@ -31,10 +31,12 @@ npx github:kaiser/gemma-chat-app
 - **No special setup required** - works out of the box
 
 ## Performance Benchmarks
-- **Model Loading**: 30-120 seconds (first time), 5-15 seconds (cached)
+- **Model Loading**: 30-120 seconds (first download), 5-15 seconds (browser cached)
+- **Model Size**: 270MB (one-time download, automatically cached)
 - **Response Generation**: 2-10 seconds with real-time token streaming
 - **Memory Usage**: 400-800MB during inference
 - **Tokens/second**: 10-50 (WebGPU), 5-25 (WASM fallback)
+- **Caching**: Browser storage cache reduces subsequent loads by 80-90%
 
 ## Testing Framework
 Comprehensive Playwright test suite covering:

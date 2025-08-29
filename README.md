@@ -57,9 +57,12 @@ The model's architecture is noteworthy: 170 million parameters are allocated to 
 
 - 🤖 **Gemma 3 270M ONNX** model running entirely in the browser
 - ⚡ **Automatic WebGPU/WASM fallback** - works in any modern browser
+- 🗄️ **Smart caching** - 270MB model cached locally, 5-15s subsequent loads
 - 🌐 **Network accessibility** - auto-detects local IP for cross-device access
 - 🔄 **Web Workers** for non-blocking model inference
 - 💬 **Real-time chat interface** with streaming responses
+- 🛑 **Stop generation** - interrupt responses with timer feedback
+- 💾 **Save conversations** - export chat as timestamped TXT files
 - 🎯 **Context awareness** - maintains conversation history
 - 📱 **Responsive design** with modern UI
 - 🔒 **Complete privacy** - no data leaves your device
