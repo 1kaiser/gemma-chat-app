@@ -156,9 +156,30 @@ function formatMemoryUsage(bytes: number): string {
 
 function startResourceMonitoring() {
     const memoryUsage = document.getElementById('memoryUsage');
+    const cpuUsage = document.getElementById('cpuUsage');
     const messageCountEl = document.getElementById('messageCount');
     
-    // Update memory usage periodically
+    let frameTimeHistory: number[] = [];
+    let lastFrameTime = performance.now();
+    
+    // CPU estimation using frame timing
+    const estimateCPU = () => {
+        const currentTime = performance.now();
+        const frameTime = currentTime - lastFrameTime;
+        lastFrameTime = currentTime;
+        
+        frameTimeHistory.push(frameTime);
+        if (frameTimeHistory.length > 10) {
+            frameTimeHistory.shift();
+        }
+        
+        requestAnimationFrame(estimateCPU);
+    };
+    
+    // Start frame timing
+    requestAnimationFrame(estimateCPU);
+    
+    // Update resources periodically
     const updateResources = () => {
         if (memoryUsage) {
             if ('memory' in performance) {
@@ -168,6 +189,28 @@ function startResourceMonitoring() {
             } else {
                 memoryUsage.textContent = 'N/A';
             }
+        }
+        
+        if (cpuUsage && frameTimeHistory.length > 0) {
+            // Calculate average frame time
+            const avgFrameTime = frameTimeHistory.reduce((a, b) => a + b, 0) / frameTimeHistory.length;
+            
+            // Estimate CPU usage based on frame time deviation from 16.67ms (60fps)
+            const idealFrameTime = 16.67;
+            const usage = Math.min(100, Math.max(0, ((avgFrameTime - idealFrameTime) / idealFrameTime) * 100 + 10));
+            
+            // Add small computational load test for better accuracy
+            const startCompute = performance.now();
+            let sum = 0;
+            for (let i = 0; i < 5000; i++) {
+                sum += Math.random();
+            }
+            const computeTime = performance.now() - startCompute;
+            
+            // Combine frame timing with compute test
+            const finalUsage = Math.min(100, Math.max(5, (usage * 0.7) + (computeTime * 10)));
+            
+            cpuUsage.textContent = `${Math.round(finalUsage)}%`;
         }
         
         if (messageCountEl) {
