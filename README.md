@@ -334,11 +334,29 @@ MIT License - feel free to use this project for learning and development!
 
 ## 🙏 Acknowledgments
 
-- **HuggingFace Transformers.js** - Browser-based ML inference
-- **Google Gemma** - Open language model
+### Core Technologies
+- **HuggingFace Transformers.js** - Browser-based ML inference framework ([Docs](https://huggingface.co/docs/transformers.js/en/index))
+- **Google Gemma 3 270M ONNX** - Open language model optimized for browsers ([Model](https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX), [Base](https://huggingface.co/google/gemma-3-270m))
 - **WebGPU** - GPU acceleration in browsers
+- **WebAssembly (WASM)** - High-performance browser runtime
 - **Vite** - Fast development and build tool
-- **Playwright** - Reliable browser testing
+
+### Research & Inspiration
+- **Simon Willison** - Extensive documentation of browser AI capabilities and Transformers.js applications, including early testing of Gemma 3 270M as "absolutely tiny, just a 241MB download" ([Tweet](https://x.com/simonw/status/1956044677796577457))
+- **Google DeepMind** - Gemma model family and smaller efficient models approach ([Gemma 3](https://blog.google/technology/developers/gemma-3/), [Gemma 3 270M](https://developers.googleblog.com/en/introducing-gemma-3-270m/))
+- **WebLLM Project** - High-performance in-browser LLM inference engine research
+- **Chrome Developer Relations** - WebGPU and WebAssembly AI performance enhancements
+
+### Key Academic References
+- Ruan, C.F., Qin, Y., Zhou, X., et al. (2024). "WebLLM: A High-Performance In-Browser LLM Inference Engine." arXiv:2412.15803
+- Google DeepMind (2024). "Gemma 3: Google's new open model based on Gemini 2.0"
+- Chrome for Developers (2024). "WebAssembly and WebGPU enhancements for faster Web AI"
+
+### Community Inspiration  
+- **Browser AI Community** - Pioneering local inference and privacy-first approaches
+- **Open Source AI Movement** - Making advanced language models accessible to everyone
+- **Educational AI Projects** - Including bedtime story generators ([svharivinod/ai-story-generator](https://github.com/svharivinod/ai-story-generator)) and interactive learning tools
+- **Fully Local PDF Chatbot** - Complete RAG pipeline inspiration ([jacoblee93/fully-local-pdf-chatbot](https://github.com/jacoblee93/fully-local-pdf-chatbot))
 
 ## 📈 Project Status
 

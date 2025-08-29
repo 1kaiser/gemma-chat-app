@@ -49,10 +49,19 @@ async function initApp() {
         
         // Set up progress callback
         chatManager.onProgress = (progress: number, message: string) => {
-            const progressFill = document.getElementById('progressFill');
-            if (progressFill) {
-                progressFill.style.width = `${progress}%`;
+            const progressRingFill = document.getElementById('progressRingFill');
+            const progressPercentage = document.getElementById('progressPercentage');
+            
+            if (progressRingFill) {
+                // Calculate stroke-dashoffset for circular progress (314 = 2 * π * 50)
+                const offset = 314 - (progress / 100) * 314;
+                progressRingFill.style.strokeDashoffset = offset.toString();
             }
+            
+            if (progressPercentage) {
+                progressPercentage.textContent = `${Math.round(progress)}%`;
+            }
+            
             if (loadingStatus) {
                 loadingStatus.textContent = message;
             }
