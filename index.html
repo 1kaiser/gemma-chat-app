@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemma Chat - WebGPU + Transformers.js</title>
+    <title>Gemma 3 Chat - Universal Browser AI</title>
     <style>
         * {
             margin: 0;
@@ -245,7 +245,7 @@
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay">
-        <h2>🤖 Loading Gemma 270M...</h2>
+        <h2>🤖 Loading Gemma 3 270M...</h2>
         <p id="loadingStatus">Initializing device capabilities...</p>
         <div class="progress-ring">
             <svg viewBox="0 0 120 120">
@@ -264,8 +264,8 @@
 
     <div class="container">
         <div class="header">
-            <h1>🌟 Gemma Chat</h1>
-            <div class="status" id="status">WebGPU + Transformers.js + Web Workers</div>
+            <h1>🌟 Gemma 3 Chat</h1>
+            <div class="status" id="status">Universal Browser Support + Transformers.js + Web Workers</div>
             <button id="shutdownButton" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                 🔌 Shutdown
             </button>
@@ -273,7 +273,7 @@
         
         <div id="chatMessages">
             <div class="message ai-message">
-                👋 Hello! I'm Gemma, running entirely in your browser using WebGPU. Ask me anything!
+                👋 Hello! I'm Gemma 3, running entirely in your browser with automatic WebGPU/WASM fallback. Ask me anything!
             </div>
         </div>
         
