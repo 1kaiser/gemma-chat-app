@@ -68,6 +68,35 @@
             text-decoration: underline;
         }
         
+        .resource-monitor {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 11px;
+            color: #6b7280;
+            min-width: 120px;
+            backdrop-filter: blur(4px);
+        }
+        
+        .resource-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+        
+        .resource-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .resource-value {
+            font-weight: 600;
+            color: #374151;
+        }
+        
         #chatMessages {
             flex: 1;
             overflow-y: auto;
@@ -369,6 +398,25 @@
             <button id="shutdownButton" style="position: absolute; top: 15px; right: 15px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
                 🔌 Shutdown
             </button>
+            
+            <div class="resource-monitor" id="resourceMonitor" style="display: none;">
+                <div class="resource-item">
+                    <span>Memory:</span>
+                    <span class="resource-value" id="memoryUsage">-</span>
+                </div>
+                <div class="resource-item">
+                    <span>Model:</span>
+                    <span class="resource-value" id="modelStatus">Loading</span>
+                </div>
+                <div class="resource-item">
+                    <span>Runtime:</span>
+                    <span class="resource-value" id="runtimeType">-</span>
+                </div>
+                <div class="resource-item">
+                    <span>Messages:</span>
+                    <span class="resource-value" id="messageCount">0</span>
+                </div>
+            </div>
         </div>
         
         <div id="chatMessages">

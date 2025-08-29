@@ -52,14 +52,17 @@ async function initApp() {
             const progressRingFill = document.getElementById('progressRingFill');
             const progressPercentage = document.getElementById('progressPercentage');
             
+            // Ensure progress is between 0-100
+            const clampedProgress = Math.max(0, Math.min(100, progress));
+            
             if (progressRingFill) {
                 // Calculate stroke-dashoffset for circular progress (314 = 2 * π * 50)
-                const offset = 314 - (progress / 100) * 314;
+                const offset = 314 - (clampedProgress / 100) * 314;
                 progressRingFill.style.strokeDashoffset = offset.toString();
             }
             
             if (progressPercentage) {
-                progressPercentage.textContent = `${Math.round(progress)}%`;
+                progressPercentage.textContent = `${Math.round(clampedProgress)}%`;
             }
             
             if (loadingStatus) {
@@ -105,6 +108,27 @@ async function initApp() {
         // Focus input
         chatInput.focus();
         
+        // Show resource monitor and start monitoring
+        const resourceMonitor = document.getElementById('resourceMonitor');
+        if (resourceMonitor) {
+            resourceMonitor.style.display = 'block';
+            
+            // Set initial runtime type
+            const runtimeType = document.getElementById('runtimeType');
+            if (runtimeType) {
+                runtimeType.textContent = hasWebGPU ? 'WebGPU' : 'WASM';
+            }
+            
+            // Set model status
+            const modelStatus = document.getElementById('modelStatus');
+            if (modelStatus) {
+                modelStatus.textContent = 'Ready';
+            }
+            
+            // Start resource monitoring
+            startResourceMonitoring();
+        }
+        
     } catch (error) {
         console.error('Failed to initialize app:', error);
         
@@ -118,6 +142,43 @@ async function initApp() {
         
         statusElement!.textContent = '❌ Failed to load model';
     }
+}
+
+// Resource monitoring functions
+function formatMemoryUsage(bytes: number): string {
+    const mb = bytes / 1024 / 1024;
+    if (mb < 1024) {
+        return `${Math.round(mb)}MB`;
+    } else {
+        return `${(mb / 1024).toFixed(1)}GB`;
+    }
+}
+
+function startResourceMonitoring() {
+    const memoryUsage = document.getElementById('memoryUsage');
+    const messageCountEl = document.getElementById('messageCount');
+    
+    // Update memory usage periodically
+    const updateResources = () => {
+        if (memoryUsage) {
+            if ('memory' in performance) {
+                const memory = (performance as any).memory;
+                const used = memory.usedJSHeapSize;
+                memoryUsage.textContent = formatMemoryUsage(used);
+            } else {
+                memoryUsage.textContent = 'N/A';
+            }
+        }
+        
+        if (messageCountEl) {
+            const messages = document.querySelectorAll('.message');
+            messageCountEl.textContent = Math.max(0, messages.length - 1).toString(); // Exclude initial greeting
+        }
+    };
+    
+    // Update immediately and then every 2 seconds
+    updateResources();
+    setInterval(updateResources, 2000);
 }
 
 // Start the app when DOM is ready
