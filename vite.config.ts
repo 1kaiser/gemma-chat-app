@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '/gemma-chat-app/',
   server: {
     port: 3001,
     headers: {
