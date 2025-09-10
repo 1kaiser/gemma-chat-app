@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Simple browser chat app with Gemma 270M, WebGPU, and Transformers.js",
+  "homepage": "https://1kaiser.github.io/gemma-chat-app",
   "bin": {
     "gemma-chat-app": "./start.js"
   },
