@@ -1,5 +1,15 @@
 // Web Worker for Gemma 270M Model Inference
-import { pipeline, TextStreamer } from '@huggingface/transformers';
+import { pipeline, TextStreamer, env } from '@huggingface/transformers';
+
+// Configure ONNX Runtime WASM backend before any model loading
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+// Fix for WASM backend initialization
+// Due to bug in onnxruntime-web, must disable multithreading
+if (env.backends?.onnx?.wasm) {
+    env.backends.onnx.wasm.numThreads = 1;
+}
 
 // Global model instance
 let generator: any = null;
@@ -13,6 +23,12 @@ let currentAbortController: AbortController | null = null;
 
 // Reset message history when worker starts
 messageHistory = [];
+
+console.log('🚀 Model worker started with WASM config:', {
+    allowLocalModels: env.allowLocalModels,
+    useBrowserCache: env.useBrowserCache,
+    wasmThreads: env.backends?.onnx?.wasm?.numThreads
+});
 
 // Initialize the model
 async function initializeModel() {
