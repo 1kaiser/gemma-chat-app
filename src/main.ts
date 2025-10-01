@@ -7,20 +7,27 @@ async function checkWebGPUSupport(): Promise<boolean> {
         console.warn('WebGPU is not supported in this browser, will use WASM');
         return false;
     }
-    
+
+    let device: GPUDevice | null = null;
     try {
         const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
             console.warn('No WebGPU adapter found, will use WASM');
             return false;
         }
-        
-        const device = await adapter.requestDevice();
+
+        device = await adapter.requestDevice();
         console.log('✅ WebGPU is available:', device);
         return true;
     } catch (error) {
         console.warn('WebGPU initialization failed, will use WASM:', error);
         return false;
+    } finally {
+        // Release the device after detection to free GPU resources
+        if (device) {
+            device.destroy();
+            console.log('🧹 WebGPU detection device released');
+        }
     }
 }
 
@@ -207,26 +214,11 @@ function startResourceMonitoring() {
             }
         }
         
-        if (cpuUsage && frameTimeHistory.length > 0) {
-            // Calculate average frame time
-            const avgFrameTime = frameTimeHistory.reduce((a, b) => a + b, 0) / frameTimeHistory.length;
-            
-            // Estimate CPU usage based on frame time deviation from 16.67ms (60fps)
-            const idealFrameTime = 16.67;
-            const usage = Math.min(100, Math.max(0, ((avgFrameTime - idealFrameTime) / idealFrameTime) * 100 + 10));
-            
-            // Add small computational load test for better accuracy
-            const startCompute = performance.now();
-            let sum = 0;
-            for (let i = 0; i < 5000; i++) {
-                sum += Math.random();
-            }
-            const computeTime = performance.now() - startCompute;
-            
-            // Combine frame timing with compute test
-            const finalUsage = Math.min(100, Math.max(5, (usage * 0.7) + (computeTime * 10)));
-            
-            cpuUsage.textContent = `${Math.round(finalUsage)}%`;
+        if (cpuUsage) {
+            // Browser doesn't provide accurate CPU usage API
+            // Show estimated activity level instead
+            cpuUsage.textContent = 'N/A';
+            cpuUsage.title = 'CPU usage monitoring not available in browser';
         }
         
         if (messageCountEl) {

@@ -9,6 +9,7 @@ export class ChatManager {
     private startTime: number = 0;
     private timerInterval: number | null = null;
     private shouldStop: boolean = false;
+    private messageQueue: string[] = [];
     
     constructor() {
         this.messagesContainer = document.getElementById('chatMessages');
@@ -70,23 +71,30 @@ export class ChatManager {
     }
     
     async generateResponse(userMessage: string): Promise<void> {
-        if (!this.worker || this.isGenerating) return;
-        
+        if (!this.worker) return;
+
+        // Queue the message if currently generating
+        if (this.isGenerating) {
+            this.messageQueue.push(userMessage);
+            console.log(`📥 Message queued (${this.messageQueue.length} in queue)`);
+            return;
+        }
+
         this.isGenerating = true;
         this.startTimer();
-        
+
         // Create AI message container
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message ai-message';
         messageDiv.id = 'current-ai-message';
         messageDiv.textContent = '';
         this.messagesContainer?.appendChild(messageDiv);
-        
+
         // Update status
         if (this.statusElement) {
             this.statusElement.textContent = '🤔 Thinking...';
         }
-        
+
         // Send message to worker
         this.worker.postMessage({
             type: 'generate',
@@ -112,24 +120,39 @@ export class ChatManager {
     
     private completeGeneration(): void {
         if (this.shouldStop) return; // Don't complete if stopped by user
-        
+
         this.isGenerating = false;
         this.stopTimer();
-        
+
         // Remove the ID from the current message
         const currentMessage = document.getElementById('current-ai-message');
         if (currentMessage) {
             currentMessage.removeAttribute('id');
         }
-        
+
         // Reset UI
         this.resetUI();
+
+        // Process next message in queue if any
+        if (this.messageQueue.length > 0) {
+            const nextMessage = this.messageQueue.shift()!;
+            console.log(`📤 Processing queued message (${this.messageQueue.length} remaining)`);
+            // Add user message to UI
+            this.addUserMessage(nextMessage);
+            // Generate response
+            setTimeout(() => this.generateResponse(nextMessage), 100);
+        }
     }
     
     private handleError(error: string): void {
         this.isGenerating = false;
+        // Ensure timer is cleaned up even on error
+        if (this.timerInterval !== null) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
         this.stopTimer();
-        
+
         // Add error message
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message ai-message';
@@ -137,7 +160,7 @@ export class ChatManager {
         messageDiv.style.color = '#c62828';
         messageDiv.textContent = `❌ Error: ${error}`;
         this.messagesContainer?.appendChild(messageDiv);
-        
+
         // Reset UI
         this.resetUI();
         this.scrollToBottom();
@@ -186,13 +209,19 @@ export class ChatManager {
     private stopGeneration(): void {
         this.shouldStop = true;
         this.isGenerating = false;
+
+        // Ensure timer is fully cleaned up
+        if (this.timerInterval !== null) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
         this.stopTimer();
-        
+
         // Send stop message to worker
         if (this.worker) {
             this.worker.postMessage({ type: 'stop' });
         }
-        
+
         // Add stopped message
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message ai-message';
@@ -200,7 +229,7 @@ export class ChatManager {
         messageDiv.style.color = '#92400e';
         messageDiv.textContent = '⏹️ Generation stopped by user';
         this.messagesContainer?.appendChild(messageDiv);
-        
+
         // Reset UI
         this.resetUI();
         this.scrollToBottom();

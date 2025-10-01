@@ -2,7 +2,7 @@
 
 ## 🌐 [Live Demo](https://1kaiser.github.io/gemma-chat-app/)
 
-![Gemma 3 270M Architecture](https://media.datacamp.com/cms/ad_4nxek_-toj_myxu_5eeswj3gudwo5cnych58gtapqmbpelummo-aqiflmyq25ds_cb6uqzutywrseyeo52xx1twwgyzjqosushqzm98awhj19ukum21owg0uammanu3kzvae_bv6ohg.png)
+![Gemma Chat Demo](gemma-chat-demo-final.gif)
 
 A simple browser-based chat application using **Gemma 270M** with **automatic WebGPU/WASM fallback**, **Transformers.js**, and **Web Workers** for a fully local AI chat experience that works in any modern browser.
 

@@ -8,13 +8,22 @@ let isInitialized = false;
 // Message history for context
 let messageHistory: Array<{ role: string; content: string }> = [];
 
+// AbortController for stopping generation
+let currentAbortController: AbortController | null = null;
+
 // Reset message history when worker starts
 messageHistory = [];
 
 // Initialize the model
 async function initializeModel() {
     if (isInitialized) return;
-    
+
+    // Set timeout for model loading (5 minutes)
+    const INIT_TIMEOUT = 5 * 60 * 1000;
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Model loading timeout after 5 minutes')), INIT_TIMEOUT)
+    );
+
     try {
         // Send initial progress
         self.postMessage({
@@ -24,18 +33,19 @@ async function initializeModel() {
                 message: 'Loading Transformers.js...'
             }
         });
-        
+
         // Detect device capabilities and fallback to WASM if needed
         let deviceConfig = { dtype: 'fp32', device: 'webgpu' };
-        
+
         // Check WebGPU support
         if (!('gpu' in navigator)) {
             console.log('🔧 WebGPU not available, falling back to WASM');
             deviceConfig = { dtype: 'fp32', device: 'wasm' };
         }
 
-        // Create text generation pipeline with Gemma 270M (with caching)
-        generator = await pipeline(
+        // Create text generation pipeline with Gemma 270M (with caching and timeout)
+        generator = await Promise.race([
+            pipeline(
             'text-generation',
             'onnx-community/gemma-3-270m-it-ONNX',
             {
@@ -80,9 +90,10 @@ async function initializeModel() {
                         });
                     }
                 }
-            }
-        );
-        
+            }),
+            timeoutPromise
+        ]) as any;
+
         isInitialized = true;
         console.log('✅ Gemma 270M model loaded successfully');
         
@@ -107,59 +118,55 @@ async function generateResponse(userMessage: string) {
         });
         return;
     }
-    
+
+    // Create new abort controller for this generation
+    currentAbortController = new AbortController();
+
     try {
-        // Create a clean conversation for this generation
-        // Don't add to persistent history until we get a response
-        const tempHistory = [...messageHistory, { role: 'user', content: userMessage }];
-        
-        // Keep only last 6 messages for context (3 exchanges max)
-        let messages = tempHistory.slice(-6);
-        
-        // Ensure alternating roles: user/assistant/user/assistant
-        // Must always start with user message
-        const cleanMessages = [];
-        
+        // Build conversation from history (simplified validation)
+        const messages = [];
+
+        // Add context from history (last 3 exchanges = 6 messages)
+        const recentHistory = messageHistory.slice(-6);
+        for (const msg of recentHistory) {
+            messages.push(msg);
+        }
+
+        // Add current user message
+        messages.push({ role: 'user', content: userMessage });
+
+        // Simple validation: ensure starts with user and alternates
+        const validMessages = [];
         for (let i = 0; i < messages.length; i++) {
             const msg = messages[i];
-            
-            // Skip consecutive messages with same role
-            if (cleanMessages.length > 0 && cleanMessages[cleanMessages.length - 1].role === msg.role) {
+            const expectedRole = i % 2 === 0 ? 'user' : 'assistant';
+
+            // If role doesn't match expected pattern, skip
+            if (msg.role !== expectedRole) {
                 continue;
             }
-            
-            // If this is the first message, it must be a user message
-            if (cleanMessages.length === 0 && msg.role !== 'user') {
-                continue; // Skip non-user first messages
-            }
-            
-            // For subsequent messages, ensure alternation
-            if (cleanMessages.length > 0) {
-                const expectedRole = cleanMessages.length % 2 === 0 ? 'user' : 'assistant';
-                if (msg.role !== expectedRole) {
-                    continue; // Skip messages that break alternation
-                }
-            }
-            
-            cleanMessages.push(msg);
+
+            validMessages.push(msg);
         }
-        
-        messages = cleanMessages;
-        
-        // Ensure we have at least one message and it ends with a user message
-        if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
-            messages = [{ role: 'user', content: userMessage }];
-        }
+
+        // Fallback: if validation fails, use just current message
+        const finalMessages = validMessages.length > 0 && validMessages[validMessages.length - 1].role === 'user'
+            ? validMessages
+            : [{ role: 'user', content: userMessage }];
         
         // Debug: log the conversation structure
-        console.log('Conversation structure:', messages.map(m => m.role).join(' -> '));
-        console.log('Message count:', messages.length);
-        
-        // Create text streamer for real-time output
+        console.log('Conversation structure:', finalMessages.map(m => m.role).join(' -> '));
+        console.log('Message count:', finalMessages.length);
+
+        // Create text streamer for real-time output with abort support
         const streamer = new TextStreamer(generator.tokenizer, {
             skip_prompt: true,
             skip_special_tokens: true,
             callback_function: (token: string) => {
+                // Check if generation was aborted
+                if (currentAbortController?.signal.aborted) {
+                    throw new Error('Generation aborted by user');
+                }
                 // Send each token to main thread
                 self.postMessage({
                     type: 'token',
@@ -167,12 +174,12 @@ async function generateResponse(userMessage: string) {
                 });
             }
         });
-        
-        // Use direct message array format (like bedtime-story-generator)
-        console.log('Messages for generation:', JSON.stringify(messages, null, 2));
-        
+
+        // Use validated messages for generation
+        console.log('Messages for generation:', JSON.stringify(finalMessages, null, 2));
+
         // Generate response using message array directly
-        const output = await generator(messages, {
+        const output = await generator(finalMessages, {
             max_new_tokens: 256,
             temperature: 0.7,
             top_p: 0.95,
@@ -199,51 +206,15 @@ async function generateResponse(userMessage: string) {
         }
         
         console.log('Extracted response:', generatedText.slice(0, 100));
-        
-        // Add messages to persistent history with strict role validation
-        const newMessages = [];
-        
-        // Only add user message if it maintains proper alternation
-        if (messageHistory.length === 0 || messageHistory[messageHistory.length - 1].role === 'assistant') {
-            newMessages.push({ role: 'user', content: userMessage });
-        }
-        
-        // Only add assistant message if it maintains proper alternation
-        const lastRole = messageHistory.length > 0 ? messageHistory[messageHistory.length - 1].role : null;
-        const willBeLastRole = newMessages.length > 0 ? 'user' : lastRole;
-        
-        if (willBeLastRole === 'user') {
-            newMessages.push({ role: 'assistant', content: generatedText });
-        }
-        
-        // Add new messages to history
-        messageHistory.push(...newMessages);
-        
-        // Keep only last 10 messages for context (5 exchanges)
+
+        // Simplified history update: just append user + assistant
+        messageHistory.push({ role: 'user', content: userMessage });
+        messageHistory.push({ role: 'assistant', content: generatedText });
+
+        // Keep only last 10 messages (5 exchanges)
         if (messageHistory.length > 10) {
             messageHistory = messageHistory.slice(-10);
         }
-        
-        // Final validation: rebuild history ensuring it starts with user and alternates
-        const validHistory = [];
-        for (const msg of messageHistory) {
-            // First message must be user
-            if (validHistory.length === 0 && msg.role !== 'user') {
-                continue;
-            }
-            
-            // Subsequent messages must alternate
-            if (validHistory.length > 0) {
-                const expectedRole = validHistory.length % 2 === 0 ? 'user' : 'assistant';
-                if (msg.role !== expectedRole) {
-                    continue;
-                }
-            }
-            
-            validHistory.push(msg);
-        }
-        
-        messageHistory = validHistory;
         
         // Send completion message
         self.postMessage({ type: 'complete' });
@@ -276,9 +247,11 @@ self.addEventListener('message', async (event: MessageEvent) => {
             break;
             
         case 'stop':
-            // Handle stop generation request
-            // Note: For now we'll just clear the history to prevent further processing
-            // In a more advanced implementation, we could interrupt the generation
+            // Actually abort the current generation
+            if (currentAbortController) {
+                currentAbortController.abort();
+                console.log('⏸️ Generation aborted by user');
+            }
             self.postMessage({ type: 'stopped' });
             break;
             
