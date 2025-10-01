@@ -50,14 +50,15 @@ async function initializeModel() {
             }
         });
 
-        // Detect device capabilities and fallback to WASM if needed
-        let deviceConfig = { dtype: 'fp32', device: 'webgpu' };
+        // Let transformers.js auto-detect best available backend
+        // Don't explicitly set 'device' - it will automatically try WebGPU first, then WASM
+        const hasWebGPU = 'gpu' in navigator;
+        console.log(hasWebGPU ? '✅ WebGPU may be available' : '🔧 WebGPU not available, will use WASM');
 
-        // Check WebGPU support
-        if (!('gpu' in navigator)) {
-            console.log('🔧 WebGPU not available, falling back to WASM');
-            deviceConfig = { dtype: 'fp32', device: 'wasm' };
-        }
+        const deviceConfig = {
+            dtype: 'fp32'
+            // No 'device' parameter - let transformers.js auto-select backend
+        };
 
         // Create text generation pipeline with Gemma 270M (with caching and timeout)
         generator = await Promise.race([
