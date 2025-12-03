@@ -3,458 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🪩 Gemma 3 270M - Universal Browser AI 🪩</title>
+    <title>Gemma 3 270M - Vue.js Chat Interface</title>
+    <!-- Import Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+            color: #1f2937;
         }
-        
         .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             width: 100%;
             max-width: 800px;
-            height: 600px;
+            height: 90vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-        }
-        
-        .header {
-            background: white;
-            color: #1f2937;
-            padding: 24px;
-            text-align: center;
-            position: relative;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        
-        .status {
-            font-size: 14px;
-            color: #6b7280;
-            min-height: 20px;
-            margin-bottom: 8px;
-        }
-        
-        .source-link {
-            font-size: 12px;
-            color: #3b82f6;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        
-        .source-link:hover {
-            color: #1d4ed8;
-            text-decoration: underline;
-        }
-        
-        .resource-monitor {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.9);
             border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 11px;
-            color: #6b7280;
-            min-width: 120px;
-            backdrop-filter: blur(4px);
         }
-        
-        .resource-item {
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #ffffff;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 2px;
+            align-items: center;
         }
-        
-        .resource-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .resource-value {
+        .header-content h1 {
+            margin: 0;
+            font-size: 1.25rem;
             font-weight: 600;
-            color: #374151;
+            color: #111827;
         }
+        .header-content p {
+            margin: 5px 0 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        #clear-btn {
+            padding: 8px 12px;
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        #clear-btn:hover { background-color: #dc2626; }
         
-        #chatMessages {
+        #chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            background: #fafafa;
+            background-color: #f9fafb;
         }
-        
         .message {
-            padding: 16px 20px;
-            border-radius: 16px;
-            max-width: 75%;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 0.95rem;
             word-wrap: break-word;
-            animation: fadeIn 0.3s ease;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            opacity: 1;
+            white-space: pre-wrap;
         }
-        
         .user-message {
             align-self: flex-end;
-            background: #3b82f6;
+            background-color: #3b82f6;
             color: white;
-            border: 1px solid #2563eb;
+            border-bottom-right-radius: 4px;
         }
-        
-        .ai-message {
+        .bot-message {
             align-self: flex-start;
-            background: white;
-            color: #1f2937;
+            background-color: white;
             border: 1px solid #e5e7eb;
+            color: #1f2937;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-        
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .input-container {
-            padding: 24px;
+        .input-area {
+            padding: 20px;
+            background-color: white;
             border-top: 1px solid #e5e7eb;
             display: flex;
-            gap: 12px;
-            background: white;
-            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            gap: 10px;
         }
-        
-        #chatInput {
+        input[type="text"] {
             flex: 1;
-            padding: 14px 18px;
+            padding: 10px 14px;
             border: 1px solid #d1d5db;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            background: white;
-        }
-        
-        #chatInput:focus {
+            border-radius: 8px;
             outline: none;
+            font-size: 1rem;
+            transition: border-color 0.15s ease-in-out;
+        }
+        input[type="text"]:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        
-        #sendButton {
-            padding: 14px 28px;
-            background: #3b82f6;
+        button#send-btn {
+            padding: 10px 20px;
+            background-color: #3b82f6;
             color: white;
-            border: 1px solid #2563eb;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
-        }
-        
-        #sendButton:hover:not(:disabled) {
-            background: #2563eb;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-        
-        #sendButton:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        #stopButton {
-            padding: 14px 20px;
-            background: #dc2626;
-            color: white;
-            border: 1px solid #b91c1c;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
-            margin-left: 8px;
-        }
-        
-        #stopButton:hover {
-            background: #b91c1c;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-        }
-        
-        #saveButton {
-            padding: 10px 16px;
-            background: #059669;
-            color: white;
-            border: 1px solid #047857;
+            border: none;
             border-radius: 8px;
-            font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
-            margin-left: 8px;
+            transition: background-color 0.15s ease-in-out;
         }
-        
-        #saveButton:hover {
-            background: #047857;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+        button#send-btn:hover:not(:disabled) {
+            background-color: #2563eb;
         }
-        
-        .loading-overlay {
-            position: fixed;
+        button#send-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .status-bar {
+            padding: 8px 20px;
+            background-color: #f3f4f6;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.75rem;
+            color: #6b7280;
+            display: flex;
+            justify-content: space-between;
+        }
+        #loading-overlay {
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            backdrop-filter: blur(12px);
+            background-color: rgba(255, 255, 255, 0.9);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: #1f2937;
-            z-index: 1000;
+            z-index: 50;
+            backdrop-filter: blur(4px);
         }
         
-        .loading-card {
-            background: white;
-            border-radius: 24px;
-            padding: 48px 40px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            margin: 20px;
+        /* Vue transition for messages */
+        .message-enter-active {
+            transition: opacity 0.3s ease;
         }
-        
-        .loading-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #1f2937;
-        }
-        
-        .loading-subtitle {
-            font-size: 16px;
-            color: #6b7280;
-            margin-bottom: 32px;
-            line-height: 1.5;
-        }
-        
-        .loading-overlay.hidden {
-            display: none;
-        }
-        
-        .progress-ring {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 24px;
-            position: relative;
-        }
-        
-        .progress-ring svg {
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-        
-        .progress-ring-background {
-            fill: none;
-            stroke: #e5e7eb;
-            stroke-width: 8;
-        }
-        
-        .progress-ring-fill {
-            fill: none;
-            stroke: url(#progressGradient);
-            stroke-width: 8;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.3s ease;
-            stroke-dasharray: 314;
-            stroke-dashoffset: 314;
-        }
-        
-        .progress-percentage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 22px;
-            font-weight: 700;
-            color: #1f2937;
-        }
-        
-        .loading-features {
-            margin-top: 24px;
-            text-align: left;
-        }
-        
-        .feature-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            font-size: 14px;
-            color: #6b7280;
-        }
-        
-        .feature-icon {
-            margin-right: 12px;
-            font-size: 16px;
-        }
-        
-        .error-message {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-            padding: 16px 20px;
-            border-radius: 12px;
-            margin: 20px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        .message-enter-from {
+            opacity: 0;
         }
     </style>
 </head>
 <body>
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-card">
-            <h2 class="loading-title">🪩 Gemma 3 270M 🪩</h2>
-            <p class="loading-subtitle" id="loadingStatus">Initializing device capabilities...</p>
-            
-            <div class="progress-ring">
-                <svg viewBox="0 0 120 120">
-                    <defs>
-                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <circle class="progress-ring-background" cx="60" cy="60" r="50"/>
-                    <circle class="progress-ring-fill" id="progressRingFill" cx="60" cy="60" r="50"/>
-                </svg>
-                <div class="progress-percentage" id="progressPercentage">0%</div>
-            </div>
-            
-            <div class="loading-features">
-                <div class="feature-item">
-                    <span class="feature-icon">🚀</span>
-                    <span>Universal browser support with WebGPU/WASM fallback</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">🔒</span>
-                    <span>Complete privacy - all processing happens locally</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">⚡</span>
-                    <span>170M embedding + 100M transformer parameters with 256k token vocabulary</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">🗄️</span>
-                    <span>Smart caching - 5-15s loads after first download</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">🌐</span>
-                    <span>No internet required after initial load</span>
-                </div>
-            </div>
-        </div>
+
+<div id="app">
+    <div v-if="isLoading" id="loading-overlay">
+        <div id="loading-text" style="font-weight: 500; color: #4b5563;">Initializing Vue & Model...</div>
     </div>
 
     <div class="container">
         <div class="header">
-            <h1>🪩 <a href="https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX" target="_blank" style="color: inherit; text-decoration: none;">Gemma 3 270M</a> 🪩</h1>
-            <div class="status" id="status">Universal Browser Support + Transformers.js + Web Workers</div>
-            <button id="shutdownButton" style="position: absolute; top: 15px; right: 15px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
-                🔌 Shutdown
-            </button>
-            
-            <div class="resource-monitor" id="resourceMonitor" style="display: none;">
-                <div class="resource-item">
-                    <span>Memory:</span>
-                    <span class="resource-value" id="memoryUsage">-</span>
-                </div>
-                <div class="resource-item">
-                    <span>CPU:</span>
-                    <span class="resource-value" id="cpuUsage">-</span>
-                </div>
-                <div class="resource-item">
-                    <span>Model:</span>
-                    <span class="resource-value" id="modelStatus">Loading</span>
-                </div>
-                <div class="resource-item">
-                    <span>Runtime:</span>
-                    <span class="resource-value" id="runtimeType">-</span>
-                </div>
-                <div class="resource-item">
-                    <span>Messages:</span>
-                    <span class="resource-value" id="messageCount">0</span>
-                </div>
+            <div class="header-content">
+                <h1>Gemma 3 270M (Persistent)</h1>
+                <p>Vue.js 3 + LocalStorage Caching</p>
             </div>
+            <button id="clear-btn" @click="clearMessages">Clear Chat</button>
         </div>
         
-        <div id="chatMessages">
-            <div class="message ai-message">
-                👋 Hello! I'm Gemma 3 270M, running entirely in your browser with automatic WebGPU/WASM fallback. Ask me anything!
-            </div>
+        <div id="chat-container" ref="chatContainer">
+            <transition-group name="message">
+                <div v-for="msg in messages"
+                     :key="msg.id"
+                     :class="['message', msg.role + '-message']">
+                    {{ msg.content }}
+                </div>
+            </transition-group>
         </div>
         
-        <div class="input-container">
+        <div class="input-area">
             <input 
                 type="text" 
-                id="chatInput" 
+                v-model="inputText"
+                id="user-input"
                 placeholder="Type your message..."
-                disabled
-            />
-            <button id="sendButton" disabled>Send</button>
-            <button id="stopButton" style="display: none;">Stop</button>
-            <button id="saveButton">💾 Save Chat</button>
+                :disabled="isGenerating || isLoading"
+                autocomplete="off"
+                @keypress.enter="sendMessage"
+            >
+            <button
+                id="send-btn"
+                @click="sendMessage"
+                :disabled="isGenerating || isLoading || !inputText.trim()"
+            >
+                Send
+            </button>
+        </div>
+
+        <div class="status-bar">
+            <span id="status-text">{{ statusText }}</span>
+            <span id="device-info">{{ deviceInfo }}</span>
         </div>
     </div>
-    
-    <script type="module" src="/src/main.ts"></script>
-    <script>
-        document.getElementById('shutdownButton').addEventListener('click', async () => {
-            if (confirm('Are you sure you want to shutdown the server?')) {
+</div>
+
+<script type="module">
+    const { createApp, ref, onMounted, nextTick, watch } = Vue;
+
+    // --- Worker Code ---
+    const workerCode = `
+    import { pipeline, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/dist/transformers.min.js';
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
+    let generator = null;
+    let history = [];
+
+    self.addEventListener('message', async (event) => {
+        const { type, data } = event.data;
+
+        if (type === 'init') {
+            try {
+                self.postMessage({ type: 'status', data: { message: 'Loading model...' } });
+                const modelId = 'onnx-community/gemma-3-270m-it-ONNX';
+
                 try {
-                    const response = await fetch('/api/shutdown', { method: 'POST' });
-                    if (response.ok) {
-                        document.body.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-size: 24px;">Server shutdown successfully. You can close this tab.</div>';
-                    }
-                } catch (error) {
-                    console.error('Shutdown error:', error);
-                    alert('Unable to shutdown server. Please close the terminal manually.');
+                    generator = await pipeline('text-generation', modelId, {
+                        dtype: 'q4', device: 'webgpu',
+                        progress_callback: (p) => {
+                            if(p.status==='progress') self.postMessage({type:'progress', data:p});
+                        }
+                    });
+                    self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
+                } catch(e) {
+                    console.warn("WebGPU failed, trying WASM", e);
+                    generator = await pipeline('text-generation', modelId, {
+                        dtype: 'q4', device: 'wasm',
+                        progress_callback: (p) => {
+                            if(p.status==='progress') self.postMessage({type:'progress', data:p});
+                        }
+                    });
+                    self.postMessage({ type: 'ready', data: { device: 'wasm' } });
                 }
+            } catch (err) {
+                self.postMessage({ type: 'error', data: err.message });
             }
-        });
-    </script>
+        } else if (type === 'restore') {
+            history = data.map(m => ({
+                role: m.role === 'bot' ? 'assistant' : 'user',
+                content: m.content
+            }));
+        } else if (type === 'reset') {
+            history = [];
+        } else if (type === 'generate') {
+            history.push({ role: 'user', content: data.message });
+            if(history.length > 10) history = history.slice(-10);
+
+            const streamer = new TextStreamer(generator.tokenizer, {
+                skip_prompt: true, skip_special_tokens: true,
+                callback_function: (token) => self.postMessage({ type: 'token', data: token })
+            });
+
+            try {
+                const output = await generator(history, {
+                    max_new_tokens: 256, temperature: 0.7, top_p: 0.95, do_sample: true, streamer
+                });
+                const response = output[0].generated_text.at(-1).content;
+                history.push({ role: 'assistant', content: response });
+                self.postMessage({ type: 'complete' });
+            } catch (err) {
+                self.postMessage({ type: 'error', data: err.message });
+            }
+        }
+    });
+    `;
+
+    createApp({
+        setup() {
+            const STORAGE_KEY = 'gemma_chat_history';
+            const messages = ref([]);
+            const inputText = ref('');
+            const isGenerating = ref(false);
+            const isLoading = ref(true);
+            const statusText = ref('Initializing...');
+            const deviceInfo = ref('Checking device...');
+            const chatContainer = ref(null);
+            let worker = null;
+
+            const loadMessages = () => {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    messages.value = JSON.parse(stored);
+                } else {
+                    messages.value = [
+                        { id: 0, role: 'bot', content: "Hello! I am Gemma 3 270M (Vue.js). I remember our conversation even if you reload!" }
+                    ];
+                }
+            };
+
+            const saveMessages = () => {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.value));
+            };
+
+            const scrollToBottom = async () => {
+                await nextTick();
+                if (chatContainer.value) {
+                    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+                }
+            };
+
+            // Watch messages to save and scroll
+            watch(messages, () => {
+                saveMessages();
+                scrollToBottom();
+            }, { deep: true });
+
+            const clearMessages = () => {
+                localStorage.removeItem(STORAGE_KEY);
+                messages.value = [{ id: 0, role: 'bot', content: "Chat history cleared." }];
+                if (worker) worker.postMessage({ type: 'reset' });
+            };
+
+            const sendMessage = () => {
+                const text = inputText.value.trim();
+                if (!text || isGenerating.value) return;
+
+                messages.value.push({ id: Date.now(), role: 'user', content: text });
+                messages.value.push({ id: Date.now() + 1, role: 'bot', content: "" });
+
+                inputText.value = '';
+                isGenerating.value = true;
+                statusText.value = 'Generating...';
+
+                worker.postMessage({ type: 'generate', data: { message: text } });
+            };
+
+            // Expose helpers for Playwright
+            window._appendToken = (token) => {
+                const lastMsg = messages.value[messages.value.length - 1];
+                if (lastMsg && lastMsg.role === 'bot') {
+                    lastMsg.content += token;
+                }
+            };
+            window._setGenerating = (val) => {
+                isGenerating.value = val;
+                if (!val) statusText.value = 'Ready';
+            };
+
+            onMounted(() => {
+                loadMessages();
+                scrollToBottom();
+
+                const blob = new Blob([workerCode], { type: 'application/javascript' });
+                worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+
+                worker.onmessage = (e) => {
+                    const { type, data } = e.data;
+                    if (type === 'ready') {
+                        isLoading.value = false;
+                        statusText.value = 'Ready';
+                        deviceInfo.value = 'Running on ' + (data.device === 'webgpu' ? 'WebGPU' : 'WASM');
+
+                        const historyToRestore = messages.value.map(m => ({ role: m.role, content: m.content }));
+                        worker.postMessage({ type: 'restore', data: historyToRestore });
+                    } else if (type === 'token') {
+                        // Use the reactive state directly
+                        const lastMsg = messages.value[messages.value.length - 1];
+                        if (lastMsg && lastMsg.role === 'bot') {
+                            lastMsg.content += data;
+                        }
+                    } else if (type === 'complete') {
+                        isGenerating.value = false;
+                        statusText.value = 'Ready';
+                        // Focus logic would go here if we had a ref to input, but v-model handles state
+                        document.getElementById('user-input').focus();
+                    } else if (type === 'status') {
+                        statusText.value = data.message;
+                    } else if (type === 'error') {
+                        alert('Error: ' + data);
+                        isGenerating.value = false;
+                        statusText.value = 'Error';
+                    }
+                };
+
+                worker.postMessage({ type: 'init' });
+            });
+
+            return {
+                messages,
+                inputText,
+                isGenerating,
+                isLoading,
+                statusText,
+                deviceInfo,
+                chatContainer,
+                sendMessage,
+                clearMessages
+            };
+        }
+    }).mount('#app');
+</script>
 </body>
 </html>
