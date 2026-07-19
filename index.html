@@ -221,10 +221,8 @@
     // --- Worker Code ---
     const workerCode = `
     import { AutoProcessor, Gemma4ForConditionalGeneration, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js';
-    // Try local models first (served from /models/ by Vite), fall back to HuggingFace
     env.allowLocalModels = true;
     env.allowRemoteModels = true;
-    env.localModelPath = '/gemma-chat-app/models/';
     env.useBrowserCache = true;
     let processor = null;
     let model = null;
@@ -236,6 +234,8 @@
         const { type, data } = event.data;
 
         if (type === 'init') {
+            // localModelPath must be an absolute URL; blob workers can't resolve root-relative paths
+            if (data?.localModelPath) env.localModelPath = data.localModelPath;
             try {
                 self.postMessage({ type: 'status', data: { message: 'Loading Gemma 4 E2B...' } });
                 const modelId = 'onnx-community/gemma-4-E2B-it-ONNX';
@@ -403,7 +403,7 @@
                     }
                 };
 
-                worker.postMessage({ type: 'init' });
+                worker.postMessage({ type: 'init', data: { localModelPath: location.origin + '/gemma-chat-app/models/' } });
             });
 
             return {
