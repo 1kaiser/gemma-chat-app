@@ -44,7 +44,8 @@ Thumbs.db
 *.temp
 *.cache
 
-# Model cache (large files)
+# Model cache (large files — download with: node download-models.js gemma4)
+public/models/
 models/
 *.onnx
 *.safetensors

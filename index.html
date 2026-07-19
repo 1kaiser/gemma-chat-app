@@ -221,7 +221,10 @@
     // --- Worker Code ---
     const workerCode = `
     import { AutoProcessor, Gemma4ForConditionalGeneration, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js';
-    env.allowLocalModels = false;
+    // Try local models first (served from /models/ by Vite), fall back to HuggingFace
+    env.allowLocalModels = true;
+    env.allowRemoteModels = true;
+    env.localModelPath = '/gemma-chat-app/models/';
     env.useBrowserCache = true;
     let processor = null;
     let model = null;
