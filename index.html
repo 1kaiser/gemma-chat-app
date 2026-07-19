@@ -130,6 +130,34 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
+        button#mic-btn {
+            padding: 10px 14px;
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+            flex-shrink: 0;
+        }
+        button#mic-btn:hover:not(:disabled) {
+            background-color: #e5e7eb;
+        }
+        button#mic-btn.recording {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+        button#mic-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
         .status-bar {
             padding: 8px 20px;
             background-color: #f3f4f6;
@@ -199,6 +227,13 @@
                 autocomplete="off"
                 @keypress.enter="sendMessage"
             >
+            <button
+                id="mic-btn"
+                @click="toggleVoice"
+                :disabled="isGenerating || isLoading"
+                :class="{ recording: isRecording }"
+                :title="isRecording ? 'Stop recording' : 'Start voice input'"
+            >{{ isRecording ? '⏹' : '🎤' }}</button>
             <button
                 id="send-btn"
                 @click="sendMessage"
@@ -299,7 +334,9 @@
             const statusText = ref('Initializing...');
             const deviceInfo = ref('Checking device...');
             const chatContainer = ref(null);
+            const isRecording = ref(false);
             let worker = null;
+            let recognition = null;
 
             const loadMessages = () => {
                 const stored = localStorage.getItem(STORAGE_KEY);
@@ -333,6 +370,39 @@
                 localStorage.removeItem(STORAGE_KEY);
                 messages.value = [{ id: 0, role: 'bot', content: "Chat history cleared." }];
                 if (worker) worker.postMessage({ type: 'reset' });
+            };
+
+            const toggleVoice = () => {
+                if (isRecording.value) {
+                    recognition?.stop();
+                    return;
+                }
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    alert('Voice input is not supported in this browser. Try Chrome or Edge.');
+                    return;
+                }
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+
+                let baseText = inputText.value;
+                recognition.onstart = () => { isRecording.value = true; };
+                recognition.onend = () => { isRecording.value = false; };
+                recognition.onerror = (e) => { isRecording.value = false; console.warn('Speech error:', e.error); };
+                recognition.onresult = (e) => {
+                    let interim = '';
+                    let final = '';
+                    for (let i = e.resultIndex; i < e.results.length; i++) {
+                        const t = e.results[i][0].transcript;
+                        if (e.results[i].isFinal) final += t;
+                        else interim += t;
+                    }
+                    if (final) baseText = (baseText + ' ' + final).trim();
+                    inputText.value = (baseText + (interim ? ' ' + interim : '')).trim();
+                };
+                recognition.start();
             };
 
             const sendMessage = () => {
@@ -404,11 +474,13 @@
                 inputText,
                 isGenerating,
                 isLoading,
+                isRecording,
                 statusText,
                 deviceInfo,
                 chatContainer,
                 sendMessage,
-                clearMessages
+                clearMessages,
+                toggleVoice
             };
         }
     }).mount('#app');
