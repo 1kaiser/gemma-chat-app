@@ -221,7 +221,10 @@
     // --- Worker Code ---
     const workerCode = `
     import { pipeline, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js';
-    env.allowLocalModels = false;
+    // Try local models first (served from /models/ by Vite), fall back to HuggingFace
+    env.allowLocalModels = true;
+    env.allowRemoteModels = true;
+    env.localModelPath = '/gemma-chat-app/models/';
     env.useBrowserCache = true;
     let generator = null;
     let history = [];
@@ -243,9 +246,9 @@
                     });
                     self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
                 } catch(e) {
-                    console.warn('WebGPU failed, trying WASM', e);
+                    console.warn('WebGPU failed, trying WASM with q4', e);
                     generator = await pipeline('text-generation', modelId, {
-                        dtype: 'q8', device: 'wasm', progress_callback: progressCb
+                        dtype: 'q4', device: 'wasm', progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'wasm' } });
                 }
