@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemma 3 270M - Vue.js Chat Interface</title>
+    <title>Gemma 4 E2B - Vue.js Chat Interface</title>
     <!-- Import Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
@@ -173,8 +173,8 @@
     <div class="container">
         <div class="header">
             <div class="header-content">
-                <h1>Gemma 3 270M (Persistent)</h1>
-                <p>Vue.js 3 + LocalStorage Caching</p>
+                <h1>Gemma 4 E2B (Persistent)</h1>
+                <p>Vue.js 3 · Transformers.js 3.8 · AutoProcessor · WebGPU/WASM</p>
             </div>
             <button id="clear-btn" @click="clearMessages">Clear Chat</button>
         </div>
@@ -220,35 +220,35 @@
 
     // --- Worker Code ---
     const workerCode = `
-    import { pipeline, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/dist/transformers.min.js';
+    import { AutoProcessor, Gemma4ForConditionalGeneration, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.0/dist/transformers.min.js';
     env.allowLocalModels = false;
     env.useBrowserCache = true;
-    let generator = null;
+    let processor = null;
+    let model = null;
     let history = [];
+    let tpsStart = null;
+    let tokenCount = 0;
 
     self.addEventListener('message', async (event) => {
         const { type, data } = event.data;
 
         if (type === 'init') {
             try {
-                self.postMessage({ type: 'status', data: { message: 'Loading model...' } });
-                const modelId = 'onnx-community/gemma-3-270m-it-ONNX';
+                self.postMessage({ type: 'status', data: { message: 'Loading Gemma 4 E2B...' } });
+                const modelId = 'onnx-community/gemma-4-E2B-it-ONNX';
+                const progressCb = (p) => { if(p.status==='progress') self.postMessage({type:'progress', data:p}); };
+
+                processor = await AutoProcessor.from_pretrained(modelId, { progress_callback: progressCb });
 
                 try {
-                    generator = await pipeline('text-generation', modelId, {
-                        dtype: 'q4', device: 'webgpu',
-                        progress_callback: (p) => {
-                            if(p.status==='progress') self.postMessage({type:'progress', data:p});
-                        }
+                    model = await Gemma4ForConditionalGeneration.from_pretrained(modelId, {
+                        dtype: 'q4f16', device: 'webgpu', progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
                 } catch(e) {
-                    console.warn("WebGPU failed, trying WASM", e);
-                    generator = await pipeline('text-generation', modelId, {
-                        dtype: 'q4', device: 'wasm',
-                        progress_callback: (p) => {
-                            if(p.status==='progress') self.postMessage({type:'progress', data:p});
-                        }
+                    console.warn('WebGPU failed, trying WASM', e);
+                    model = await Gemma4ForConditionalGeneration.from_pretrained(modelId, {
+                        dtype: 'q4', device: 'wasm', progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'wasm' } });
                 }
@@ -256,26 +256,34 @@
                 self.postMessage({ type: 'error', data: err.message });
             }
         } else if (type === 'restore') {
-            history = data.map(m => ({
-                role: m.role === 'bot' ? 'assistant' : 'user',
-                content: m.content
-            }));
+            history = data.map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }));
         } else if (type === 'reset') {
             history = [];
         } else if (type === 'generate') {
+            tpsStart = null;
+            tokenCount = 0;
+            const responseTokens = [];
             history.push({ role: 'user', content: data.message });
             if(history.length > 10) history = history.slice(-10);
 
-            const streamer = new TextStreamer(generator.tokenizer, {
-                skip_prompt: true, skip_special_tokens: true,
-                callback_function: (token) => self.postMessage({ type: 'token', data: token })
-            });
-
             try {
-                const output = await generator(history, {
-                    max_new_tokens: 256, temperature: 0.7, top_p: 0.95, do_sample: true, streamer
+                const inputs = await processor.apply_chat_template(history, {
+                    add_generation_prompt: true, return_dict: true
                 });
-                const response = output[0].generated_text.at(-1).content;
+
+                const streamer = new TextStreamer(processor.tokenizer, {
+                    skip_prompt: true, skip_special_tokens: true,
+                    callback_function: (token) => {
+                        if (!tpsStart) tpsStart = performance.now();
+                        tokenCount++;
+                        responseTokens.push(token);
+                        const tps = (tokenCount / ((performance.now() - tpsStart) / 1000)).toFixed(1);
+                        self.postMessage({ type: 'token', data: { token, tps } });
+                    }
+                });
+
+                await model.generate({ ...inputs, max_new_tokens: 512, do_sample: false, streamer });
+                const response = responseTokens.join('');
                 history.push({ role: 'assistant', content: response });
                 self.postMessage({ type: 'complete' });
             } catch (err) {
@@ -303,7 +311,7 @@
                     messages.value = JSON.parse(stored);
                 } else {
                     messages.value = [
-                        { id: 0, role: 'bot', content: "Hello! I am Gemma 3 270M (Vue.js). I remember our conversation even if you reload!" }
+                        { id: 0, role: 'bot', content: "Hello! I am Gemma 4 E2B (2.3B params) running entirely in your browser. I remember our conversation even if you reload!" }
                     ];
                 }
             };
@@ -374,15 +382,14 @@
                         const historyToRestore = messages.value.map(m => ({ role: m.role, content: m.content }));
                         worker.postMessage({ type: 'restore', data: historyToRestore });
                     } else if (type === 'token') {
-                        // Use the reactive state directly
                         const lastMsg = messages.value[messages.value.length - 1];
                         if (lastMsg && lastMsg.role === 'bot') {
-                            lastMsg.content += data;
+                            lastMsg.content += data.token;
                         }
+                        if (data.tps) statusText.value = `Generating... ${data.tps} tok/s`;
                     } else if (type === 'complete') {
                         isGenerating.value = false;
                         statusText.value = 'Ready';
-                        // Focus logic would go here if we had a ref to input, but v-model handles state
                         document.getElementById('user-input').focus();
                     } else if (type === 'status') {
                         statusText.value = data.message;
