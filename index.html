@@ -263,6 +263,7 @@
     let history = [];
     let tpsStart = null;
     let tokenCount = 0;
+    const MODEL_ID = 'onnx-community/gemma-4-E2B-it-ONNX';
 
     self.addEventListener('message', async (event) => {
         const { type, data } = event.data;
@@ -272,17 +273,16 @@
             if (data?.localModelPath) env.localModelPath = data.localModelPath;
             try {
                 self.postMessage({ type: 'status', data: { message: 'Loading Gemma 4 E2B...' } });
-                const modelId = 'onnx-community/gemma-4-E2B-it-ONNX';
                 const progressCb = (p) => { if(p.status==='progress') self.postMessage({type:'progress', data:p}); };
 
                 try {
-                    generator = await pipeline('text-generation', modelId, {
+                    generator = await pipeline('text-generation', MODEL_ID, {
                         dtype: 'q4f16', device: 'webgpu', progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
                 } catch(e) {
-                    console.warn('WebGPU failed, trying WASM', e);
-                    generator = await pipeline('text-generation', modelId, {
+                    console.warn('WebGPU init failed, falling back to WASM', e);
+                    generator = await pipeline('text-generation', MODEL_ID, {
                         dtype: 'q4', device: 'wasm', progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'wasm' } });
@@ -312,14 +312,16 @@
                         self.postMessage({ type: 'token', data: { token, tps } });
                     }
                 });
-
                 await generator(history, { max_new_tokens: 512, do_sample: false, streamer });
-                const response = responseTokens.join('');
-                history.push({ role: 'assistant', content: response });
-                self.postMessage({ type: 'complete' });
             } catch (err) {
+                history.pop();
                 self.postMessage({ type: 'error', data: err.message });
+                return;
             }
+
+            const response = responseTokens.join('');
+            history.push({ role: 'assistant', content: response });
+            self.postMessage({ type: 'complete' });
         }
     });
     `;
@@ -431,10 +433,8 @@
                 if (!val) statusText.value = 'Ready';
             };
 
-            onMounted(() => {
-                loadMessages();
-                scrollToBottom();
-
+            const startWorker = (historyToRestore) => {
+                if (worker) worker.terminate();
                 const blob = new Blob([workerCode], { type: 'application/javascript' });
                 worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
 
@@ -444,9 +444,9 @@
                         isLoading.value = false;
                         statusText.value = 'Ready';
                         deviceInfo.value = 'Running on ' + (data.device === 'webgpu' ? 'WebGPU' : 'WASM');
-
-                        const historyToRestore = messages.value.map(m => ({ role: m.role, content: m.content }));
-                        worker.postMessage({ type: 'restore', data: historyToRestore });
+                        if (historyToRestore?.length) {
+                            worker.postMessage({ type: 'restore', data: historyToRestore });
+                        }
                     } else if (type === 'token') {
                         const lastMsg = messages.value[messages.value.length - 1];
                         if (lastMsg && lastMsg.role === 'bot') {
@@ -457,16 +457,40 @@
                         isGenerating.value = false;
                         statusText.value = 'Ready';
                         document.getElementById('user-input').focus();
+                    } else if (type === 'device_switch') {
+                        deviceInfo.value = 'Running on WebGPU (reloaded)';
                     } else if (type === 'status') {
                         statusText.value = data.message;
                     } else if (type === 'error') {
-                        alert('Error: ' + data);
+                        // Remove empty bot placeholder for failed generation
+                        const lastBotMsg = messages.value[messages.value.length - 1];
+                        if (lastBotMsg?.role === 'bot' && !lastBotMsg.content) {
+                            messages.value.pop();
+                        }
                         isGenerating.value = false;
-                        statusText.value = 'Error';
+                        if (data?.includes('OrtRun')) {
+                            // GPU context is lost after OrtRun failure on this hardware;
+                            // a new Worker can't get the adapter either — must reload page.
+                            statusText.value = 'Error — GPU session ended. Reload to continue.';
+                            messages.value.push({
+                                id: Date.now(), role: 'bot',
+                                content: '⚠️ GPU memory exhausted. The context was too long for this GPU. Reload the page to start a fresh session.'
+                            });
+                        } else {
+                            alert('Error: ' + data);
+                            statusText.value = 'Error';
+                        }
                     }
                 };
 
                 worker.postMessage({ type: 'init', data: { localModelPath: location.origin + '/gemma-chat-app/models/' } });
+            };
+
+            onMounted(() => {
+                loadMessages();
+                scrollToBottom();
+                const historyToRestore = messages.value.map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.content }));
+                startWorker(historyToRestore);
             });
 
             return {
