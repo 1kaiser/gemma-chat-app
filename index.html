@@ -321,8 +321,13 @@ Rules:
             if (data?.localModelPath) env.localModelPath = data.localModelPath;
             if (data?.memoryBlock) memoryBlock = data.memoryBlock;
             try {
-                self.postMessage({ type: 'status', data: { message: 'Loading Gemma 3 1B...' } });
                 const modelId = 'onnx-community/gemma-3-1b-it-ONNX';
+                let isLocal = false;
+                try {
+                    const check = await fetch(env.localModelPath + modelId + '/config.json', { method: 'HEAD' });
+                    isLocal = check.ok;
+                } catch(e) {}
+                self.postMessage({ type: 'status', data: { message: isLocal ? 'Loading Gemma 3 1B from local files...' : 'Downloading Gemma 3 1B (~600 MB, first time)...' } });
                 const progressCb = (p) => { if(p.status==='progress') self.postMessage({type:'progress', data:p}); };
 
                 try {
