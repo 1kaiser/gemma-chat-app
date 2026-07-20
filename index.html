@@ -255,12 +255,11 @@
 
     // --- Worker Code ---
     const workerCode = `
-    import { AutoProcessor, Gemma4ForConditionalGeneration, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js';
+    import { pipeline, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js';
     env.allowLocalModels = true;
     env.allowRemoteModels = true;
     env.useBrowserCache = true;
-    let processor = null;
-    let model = null;
+    let generator = null;
     let history = [];
     let tpsStart = null;
     let tokenCount = 0;
@@ -276,16 +275,14 @@
                 const modelId = 'onnx-community/gemma-4-E2B-it-ONNX';
                 const progressCb = (p) => { if(p.status==='progress') self.postMessage({type:'progress', data:p}); };
 
-                processor = await AutoProcessor.from_pretrained(modelId, { progress_callback: progressCb });
-
                 try {
-                    model = await Gemma4ForConditionalGeneration.from_pretrained(modelId, {
+                    generator = await pipeline('text-generation', modelId, {
                         dtype: 'q4f16', device: 'webgpu', progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
                 } catch(e) {
                     console.warn('WebGPU failed, trying WASM', e);
-                    model = await Gemma4ForConditionalGeneration.from_pretrained(modelId, {
+                    generator = await pipeline('text-generation', modelId, {
                         dtype: 'q4', device: 'wasm', progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'wasm' } });
@@ -305,11 +302,7 @@
             if(history.length > 10) history = history.slice(-10);
 
             try {
-                const inputs = await processor.apply_chat_template(history, {
-                    add_generation_prompt: true, return_dict: true
-                });
-
-                const streamer = new TextStreamer(processor.tokenizer, {
+                const streamer = new TextStreamer(generator.tokenizer, {
                     skip_prompt: true, skip_special_tokens: true,
                     callback_function: (token) => {
                         if (!tpsStart) tpsStart = performance.now();
@@ -320,7 +313,7 @@
                     }
                 });
 
-                await model.generate({ ...inputs, max_new_tokens: 512, do_sample: false, streamer });
+                await generator(history, { max_new_tokens: 512, do_sample: false, streamer });
                 const response = responseTokens.join('');
                 history.push({ role: 'assistant', content: response });
                 self.postMessage({ type: 'complete' });
