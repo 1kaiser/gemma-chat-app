@@ -309,8 +309,16 @@ Rules:
 - If past context (memories) are provided, reference them naturally when relevant.\`;
 
     const buildFullHistory = () => {
-        const sys = { role: 'system', content: SYSTEM_PROMPT + (memoryBlock ? '\\n\\nPast context (memories):\\n' + memoryBlock : '') };
-        return [sys, ...history.slice(-4)];
+        // Gemma 3's chat template only supports user/assistant alternation — no
+        // 'system' role. Fold the system prompt + memory block into the first
+        // user turn instead, so the conversation still alternates correctly.
+        const preamble = SYSTEM_PROMPT + (memoryBlock ? '\\n\\nPast context (memories):\\n' + memoryBlock : '');
+        const recent = history.slice(-4);
+        if (recent.length && recent[0].role === 'user') {
+            const [first, ...rest] = recent;
+            return [{ role: 'user', content: preamble + '\\n\\n---\\n\\n' + first.content }, ...rest];
+        }
+        return [{ role: 'user', content: preamble }, ...recent];
     };
 
     self.addEventListener('message', async (event) => {
