@@ -318,15 +318,23 @@ Rules:
 
         if (type === 'init') {
             // localModelPath must be an absolute URL; blob workers can't resolve root-relative paths
-            if (data?.localModelPath) env.localModelPath = data.localModelPath;
             if (data?.memoryBlock) memoryBlock = data.memoryBlock;
             try {
                 const modelId = 'onnx-community/gemma-3-1b-it-ONNX';
+                // Vite's dev server (and most static hosts' SPA fallback) returns 200+HTML for
+                // missing paths instead of a 404, so an ok status alone false-positives as
+                // "local" when the model was never downloaded, breaking loading entirely since
+                // Transformers.js then tries to parse that HTML as config.json. Sniff
+                // content-type too, and only enable local loading when it's genuinely there.
                 let isLocal = false;
-                try {
-                    const check = await fetch(env.localModelPath + modelId + '/config.json', { method: 'HEAD' });
-                    isLocal = check.ok;
-                } catch(e) {}
+                if (data?.localModelPath) {
+                    try {
+                        const check = await fetch(data.localModelPath + modelId + '/config.json', { method: 'HEAD' });
+                        isLocal = check.ok && (check.headers.get('content-type') || '').includes('json');
+                    } catch(e) {}
+                }
+                if (isLocal) env.localModelPath = data.localModelPath;
+                env.allowLocalModels = isLocal;
                 self.postMessage({ type: 'status', data: { message: isLocal ? 'Loading Gemma 3 1B from local files...' : 'Downloading Gemma 3 1B (~600 MB, first time)...' } });
                 const progressCb = (p) => { if(p.status==='progress') self.postMessage({type:'progress', data:p}); };
 
@@ -419,19 +427,19 @@ Rules:
             const buildMemoryBlock = (n = 5) => {
                 const recent = memories.value.slice(-n);
                 if (!recent.length) return '';
-                return recent.map(m => \`[\${new Date(m.ts).toLocaleString()}]\\nQ: \${m.q}\\nA: \${m.a}\`).join('\\n\\n');
+                return recent.map(m => `[${new Date(m.ts).toLocaleString()}]\nQ: ${m.q}\nA: ${m.a}`).join('\n\n');
             };
             const clearMemories = () => {
                 Object.keys(localStorage).filter(k => k.startsWith(MEMORY_PREFIX)).forEach(k => localStorage.removeItem(k));
                 loadMemories();
             };
             const exportMemories = () => {
-                const lines = ['# Gemma 3 1B — Chat Memory\\n'];
-                memories.value.forEach(m => { lines.push(\`## \${new Date(m.ts).toLocaleString()}\\n**Q:** \${m.q}\\n\\n**A:** \${m.a}\\n\`); });
-                const blob = new Blob([lines.join('\\n')], { type: 'text/markdown' });
+                const lines = ['# Gemma 3 1B — Chat Memory\n'];
+                memories.value.forEach(m => { lines.push(`## ${new Date(m.ts).toLocaleString()}\n**Q:** ${m.q}\n\n**A:** ${m.a}\n`); });
+                const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url; a.download = \`gemma3-memory-\${new Date().toISOString().slice(0,10)}.md\`; a.click(); URL.revokeObjectURL(url);
+                a.href = url; a.download = `gemma3-memory-${new Date().toISOString().slice(0,10)}.md`; a.click(); URL.revokeObjectURL(url);
             };
             const updateWorkerMemory = () => { if (worker) worker.postMessage({ type: 'memory_update', data: buildMemoryBlock() }); };
 
