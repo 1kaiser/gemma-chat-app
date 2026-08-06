@@ -340,7 +340,12 @@ Rules:
 
                 try {
                     generator = await pipeline('text-generation', MODEL_ID, {
-                        dtype: 'q4f16', device: 'webgpu', progress_callback: progressCb
+                        dtype: {
+                            embed_tokens: 'fp16',
+                            decoder_model_merged: 'q4',
+                        },
+                        device: 'webgpu',
+                        progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
                 } catch(e) {
