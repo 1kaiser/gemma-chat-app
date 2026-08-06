@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemma 3 270M - Vue.js Chat Interface</title>
+    <title>Gemma 4 E2B - Vue.js Chat Interface</title>
     <!-- Import Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
@@ -130,6 +130,34 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
+        button#mic-btn {
+            padding: 10px 14px;
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+            flex-shrink: 0;
+        }
+        button#mic-btn:hover:not(:disabled) {
+            background-color: #e5e7eb;
+        }
+        button#mic-btn.recording {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+        button#mic-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
         .status-bar {
             padding: 8px 20px;
             background-color: #f3f4f6;
@@ -155,12 +183,25 @@
         }
         
         /* Vue transition for messages */
-        .message-enter-active {
-            transition: opacity 0.3s ease;
-        }
-        .message-enter-from {
-            opacity: 0;
-        }
+        .message-enter-active { transition: opacity 0.3s ease; }
+        .message-enter-from { opacity: 0; }
+        /* Memory panel */
+        button#mem-btn { padding: 8px 12px; background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.8rem; cursor: pointer; position: relative; }
+        button#mem-btn:hover { background-color: #e5e7eb; }
+        .mem-badge { position: absolute; top: -4px; right: -4px; background: #3b82f6; color: white; border-radius: 9999px; font-size: 0.65rem; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+        .mem-panel { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: white; z-index: 100; display: flex; flex-direction: column; border-radius: 12px; }
+        .mem-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }
+        .mem-panel-header h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+        .mem-panel-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+        .mem-entry { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; }
+        .mem-entry-ts { color: #6b7280; font-size: 0.75rem; margin-bottom: 4px; }
+        .mem-entry-q { font-weight: 500; color: #111827; margin-bottom: 3px; }
+        .mem-entry-a { color: #374151; }
+        .mem-empty { color: #9ca3af; text-align: center; padding: 40px 0; }
+        .mem-actions { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; border: 1px solid #d1d5db; background: white; }
+        .btn-sm.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .btn-sm.danger  { background: #ef4444; color: white; border-color: #ef4444; }
     </style>
 </head>
 <body>
@@ -170,13 +211,37 @@
         <div id="loading-text" style="font-weight: 500; color: #4b5563;">Initializing Vue & Model...</div>
     </div>
 
-    <div class="container">
+    <div class="container" style="position:relative;">
+        <div v-if="showMemory" class="mem-panel">
+            <div class="mem-panel-header">
+                <h2>Memory ({{ memories.length }} entries)</h2>
+                <div class="mem-actions">
+                    <button class="btn-sm primary" @click="exportMemories">Export .md</button>
+                    <button class="btn-sm danger"  @click="clearMemories">Clear All</button>
+                    <button class="btn-sm" @click="showMemory = false">✕ Close</button>
+                </div>
+            </div>
+            <div class="mem-panel-body">
+                <div v-if="!memories.length" class="mem-empty">No memories yet — they save automatically after each response.</div>
+                <div v-for="m in [...memories].reverse()" :key="m.ts" class="mem-entry">
+                    <div class="mem-entry-ts">{{ new Date(m.ts).toLocaleString() }}</div>
+                    <div class="mem-entry-q">Q: {{ m.q }}</div>
+                    <div class="mem-entry-a">A: {{ m.a.slice(0, 200) }}{{ m.a.length > 200 ? '…' : '' }}</div>
+                </div>
+            </div>
+        </div>
         <div class="header">
             <div class="header-content">
-                <h1>Gemma 3 270M (Persistent)</h1>
-                <p>Vue.js 3 + LocalStorage Caching</p>
+                <h1>Gemma 4 E2B (Persistent)</h1>
+                <p>Vue.js 3 · Transformers.js 4.2 · AutoProcessor · WebGPU/WASM</p>
             </div>
-            <button id="clear-btn" @click="clearMessages">Clear Chat</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button id="mem-btn" @click="showMemory = true" title="View memory">
+                    🧠 Memory
+                    <span v-if="memories.length" class="mem-badge">{{ memories.length }}</span>
+                </button>
+                <button id="clear-btn" @click="clearMessages">Clear Chat</button>
+            </div>
         </div>
         
         <div id="chat-container" ref="chatContainer">
@@ -200,6 +265,13 @@
                 @keypress.enter="sendMessage"
             >
             <button
+                id="mic-btn"
+                @click="toggleVoice"
+                :disabled="isGenerating || isLoading"
+                :class="{ recording: isRecording }"
+                :title="isRecording ? 'Stop recording' : 'Start voice input'"
+            >{{ isRecording ? '⏹' : '🎤' }}</button>
+            <button
                 id="send-btn"
                 @click="sendMessage"
                 :disabled="isGenerating || isLoading || !inputText.trim()"
@@ -220,35 +292,66 @@
 
     // --- Worker Code ---
     const workerCode = `
-    import { pipeline, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/dist/transformers.min.js';
-    env.allowLocalModels = false;
+    import { pipeline, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js';
+    env.allowLocalModels = true;
+    env.allowRemoteModels = true;
     env.useBrowserCache = true;
     let generator = null;
     let history = [];
+    let memoryBlock = '';
+    let tpsStart = null;
+    let tokenCount = 0;
+    const MODEL_ID = 'onnx-community/gemma-4-E2B-it-ONNX';
+    const SYSTEM_PROMPT = \`You are a helpful AI assistant running entirely in the browser.
+Rules:
+- Answer in 3–5 lines unless the user explicitly asks for code, a list, or more detail.
+- Be direct and factual. No filler phrases.
+- If past context (memories) are provided, reference them naturally when relevant.\`;
+
+    const buildFullHistory = () => {
+        const sys = { role: 'system', content: SYSTEM_PROMPT + (memoryBlock ? '\\n\\nPast context (memories):\\n' + memoryBlock : '') };
+        return [sys, ...history.slice(-4)];
+    };
 
     self.addEventListener('message', async (event) => {
         const { type, data } = event.data;
 
         if (type === 'init') {
+            // localModelPath must be an absolute URL; blob workers can't resolve root-relative paths
+            if (data?.memoryBlock) memoryBlock = data.memoryBlock;
             try {
-                self.postMessage({ type: 'status', data: { message: 'Loading model...' } });
-                const modelId = 'onnx-community/gemma-3-270m-it-ONNX';
+                // Detect whether model files are present locally or need to be downloaded.
+                // Vite's dev server (and most static hosts' SPA fallback) returns 200+HTML for
+                // missing paths instead of a 404, so an ok status alone false-positives as
+                // "local" when the model was never downloaded, breaking loading entirely since
+                // Transformers.js then tries to parse that HTML as config.json. Sniff
+                // content-type too, and only enable local loading when it's genuinely there.
+                let isLocal = false;
+                if (data?.localModelPath) {
+                    try {
+                        const check = await fetch(data.localModelPath + MODEL_ID + '/config.json', { method: 'HEAD' });
+                        isLocal = check.ok && (check.headers.get('content-type') || '').includes('json');
+                    } catch(e) {}
+                }
+                if (isLocal) env.localModelPath = data.localModelPath;
+                env.allowLocalModels = isLocal;
+                self.postMessage({ type: 'status', data: { message: isLocal ? 'Loading Gemma 4 E2B from local files...' : 'Downloading Gemma 4 E2B (~1.5 GB, first time)...' } });
+                const progressCb = (p) => { if(p.status==='progress') self.postMessage({type:'progress', data:p}); };
 
                 try {
-                    generator = await pipeline('text-generation', modelId, {
-                        dtype: 'q4', device: 'webgpu',
-                        progress_callback: (p) => {
-                            if(p.status==='progress') self.postMessage({type:'progress', data:p});
-                        }
+                    generator = await pipeline('text-generation', MODEL_ID, {
+                        dtype: {
+                            embed_tokens: 'fp16',
+                            decoder_model_merged: 'q4',
+                        },
+                        device: 'webgpu',
+                        progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
                 } catch(e) {
-                    console.warn("WebGPU failed, trying WASM", e);
-                    generator = await pipeline('text-generation', modelId, {
-                        dtype: 'q4', device: 'wasm',
-                        progress_callback: (p) => {
-                            if(p.status==='progress') self.postMessage({type:'progress', data:p});
-                        }
+                    console.warn('WebGPU init failed, falling back to WASM', e);
+                    generator = await pipeline('text-generation', MODEL_ID, {
+                        dtype: 'q4', device: 'wasm', progress_callback: progressCb
                     });
                     self.postMessage({ type: 'ready', data: { device: 'wasm' } });
                 }
@@ -256,31 +359,41 @@
                 self.postMessage({ type: 'error', data: err.message });
             }
         } else if (type === 'restore') {
-            history = data.map(m => ({
-                role: m.role === 'bot' ? 'assistant' : 'user',
-                content: m.content
-            }));
+            history = data
+                .filter(m => m.role !== 'system')
+                .map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.content }))
+                .filter(m => m.content);
+        } else if (type === 'memory_update') {
+            memoryBlock = data;
         } else if (type === 'reset') {
             history = [];
         } else if (type === 'generate') {
+            tpsStart = null;
+            tokenCount = 0;
+            const responseTokens = [];
             history.push({ role: 'user', content: data.message });
-            if(history.length > 10) history = history.slice(-10);
-
-            const streamer = new TextStreamer(generator.tokenizer, {
-                skip_prompt: true, skip_special_tokens: true,
-                callback_function: (token) => self.postMessage({ type: 'token', data: token })
-            });
 
             try {
-                const output = await generator(history, {
-                    max_new_tokens: 256, temperature: 0.7, top_p: 0.95, do_sample: true, streamer
+                const streamer = new TextStreamer(generator.tokenizer, {
+                    skip_prompt: true, skip_special_tokens: true,
+                    callback_function: (token) => {
+                        if (!tpsStart) tpsStart = performance.now();
+                        tokenCount++;
+                        responseTokens.push(token);
+                        const tps = (tokenCount / ((performance.now() - tpsStart) / 1000)).toFixed(1);
+                        self.postMessage({ type: 'token', data: { token, tps } });
+                    }
                 });
-                const response = output[0].generated_text.at(-1).content;
-                history.push({ role: 'assistant', content: response });
-                self.postMessage({ type: 'complete' });
+                await generator(buildFullHistory(), { max_new_tokens: 200, do_sample: false, streamer });
             } catch (err) {
+                history.pop();
                 self.postMessage({ type: 'error', data: err.message });
+                return;
             }
+
+            const response = responseTokens.join('');
+            history.push({ role: 'assistant', content: response });
+            self.postMessage({ type: 'complete' });
         }
     });
     `;
@@ -288,6 +401,8 @@
     createApp({
         setup() {
             const STORAGE_KEY = 'gemma_chat_history';
+            const MEMORY_PREFIX = 'gmem4_';
+            const MAX_MEMORIES = 20;
             const messages = ref([]);
             const inputText = ref('');
             const isGenerating = ref(false);
@@ -295,7 +410,42 @@
             const statusText = ref('Initializing...');
             const deviceInfo = ref('Checking device...');
             const chatContainer = ref(null);
+            const isRecording = ref(false);
+            const showMemory = ref(false);
+            const memories = ref([]);
             let worker = null;
+            let recognition = null;
+            let lastUserText = '';
+
+            const loadMemories = () => {
+                const keys = Object.keys(localStorage).filter(k => k.startsWith(MEMORY_PREFIX)).sort();
+                memories.value = keys.map(k => JSON.parse(localStorage.getItem(k)));
+            };
+            const saveMemoryEntry = (q, a) => {
+                const ts = new Date().toISOString();
+                localStorage.setItem(MEMORY_PREFIX + ts, JSON.stringify({ ts, q: q.slice(0, 300), a: a.slice(0, 600) }));
+                const keys = Object.keys(localStorage).filter(k => k.startsWith(MEMORY_PREFIX)).sort();
+                if (keys.length > MAX_MEMORIES) keys.slice(0, keys.length - MAX_MEMORIES).forEach(k => localStorage.removeItem(k));
+                loadMemories();
+            };
+            const buildMemoryBlock = (n = 5) => {
+                const recent = memories.value.slice(-n);
+                if (!recent.length) return '';
+                return recent.map(m => `[${new Date(m.ts).toLocaleString()}]\nQ: ${m.q}\nA: ${m.a}`).join('\n\n');
+            };
+            const clearMemories = () => {
+                Object.keys(localStorage).filter(k => k.startsWith(MEMORY_PREFIX)).forEach(k => localStorage.removeItem(k));
+                loadMemories();
+            };
+            const exportMemories = () => {
+                const lines = ['# Gemma 4 E2B — Chat Memory\n'];
+                memories.value.forEach(m => { lines.push(`## ${new Date(m.ts).toLocaleString()}\n**Q:** ${m.q}\n\n**A:** ${m.a}\n`); });
+                const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url;
+                a.download = `gemma4-memory-${new Date().toISOString().slice(0,10)}.md`; a.click(); URL.revokeObjectURL(url);
+            };
+            const updateWorkerMemory = () => { if (worker) worker.postMessage({ type: 'memory_update', data: buildMemoryBlock() }); };
 
             const loadMessages = () => {
                 const stored = localStorage.getItem(STORAGE_KEY);
@@ -303,7 +453,7 @@
                     messages.value = JSON.parse(stored);
                 } else {
                     messages.value = [
-                        { id: 0, role: 'bot', content: "Hello! I am Gemma 3 270M (Vue.js). I remember our conversation even if you reload!" }
+                        { id: 0, role: 'bot', content: "Hello! I am Gemma 4 E2B (2.3B params) running entirely in your browser. I remember our conversation even if you reload!" }
                     ];
                 }
             };
@@ -331,10 +481,44 @@
                 if (worker) worker.postMessage({ type: 'reset' });
             };
 
+            const toggleVoice = () => {
+                if (isRecording.value) {
+                    recognition?.stop();
+                    return;
+                }
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    alert('Voice input is not supported in this browser. Try Chrome or Edge.');
+                    return;
+                }
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+
+                let baseText = inputText.value;
+                recognition.onstart = () => { isRecording.value = true; };
+                recognition.onend = () => { isRecording.value = false; };
+                recognition.onerror = (e) => { isRecording.value = false; console.warn('Speech error:', e.error); };
+                recognition.onresult = (e) => {
+                    let interim = '';
+                    let final = '';
+                    for (let i = e.resultIndex; i < e.results.length; i++) {
+                        const t = e.results[i][0].transcript;
+                        if (e.results[i].isFinal) final += t;
+                        else interim += t;
+                    }
+                    if (final) baseText = (baseText + ' ' + final).trim();
+                    inputText.value = (baseText + (interim ? ' ' + interim : '')).trim();
+                };
+                recognition.start();
+            };
+
             const sendMessage = () => {
                 const text = inputText.value.trim();
                 if (!text || isGenerating.value) return;
 
+                lastUserText = text;
                 messages.value.push({ id: Date.now(), role: 'user', content: text });
                 messages.value.push({ id: Date.now() + 1, role: 'bot', content: "" });
 
@@ -357,10 +541,8 @@
                 if (!val) statusText.value = 'Ready';
             };
 
-            onMounted(() => {
-                loadMessages();
-                scrollToBottom();
-
+            const startWorker = (historyToRestore) => {
+                if (worker) worker.terminate();
                 const blob = new Blob([workerCode], { type: 'application/javascript' });
                 worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
 
@@ -370,30 +552,59 @@
                         isLoading.value = false;
                         statusText.value = 'Ready';
                         deviceInfo.value = 'Running on ' + (data.device === 'webgpu' ? 'WebGPU' : 'WASM');
-
-                        const historyToRestore = messages.value.map(m => ({ role: m.role, content: m.content }));
-                        worker.postMessage({ type: 'restore', data: historyToRestore });
+                        if (historyToRestore?.length) {
+                            worker.postMessage({ type: 'restore', data: historyToRestore });
+                        }
                     } else if (type === 'token') {
-                        // Use the reactive state directly
                         const lastMsg = messages.value[messages.value.length - 1];
                         if (lastMsg && lastMsg.role === 'bot') {
-                            lastMsg.content += data;
+                            lastMsg.content += data.token;
                         }
+                        if (data.tps) statusText.value = `Generating... ${data.tps} tok/s`;
                     } else if (type === 'complete') {
                         isGenerating.value = false;
                         statusText.value = 'Ready';
-                        // Focus logic would go here if we had a ref to input, but v-model handles state
                         document.getElementById('user-input').focus();
+                        const lastBot = messages.value.filter(m => m.role === 'bot' && m.content).at(-1);
+                        if (lastUserText && lastBot?.content) {
+                            saveMemoryEntry(lastUserText, lastBot.content);
+                            updateWorkerMemory();
+                        }
+                    } else if (type === 'device_switch') {
+                        deviceInfo.value = 'Running on WebGPU (reloaded)';
                     } else if (type === 'status') {
                         statusText.value = data.message;
                     } else if (type === 'error') {
-                        alert('Error: ' + data);
+                        // Remove empty bot placeholder for failed generation
+                        const lastBotMsg = messages.value[messages.value.length - 1];
+                        if (lastBotMsg?.role === 'bot' && !lastBotMsg.content) {
+                            messages.value.pop();
+                        }
                         isGenerating.value = false;
-                        statusText.value = 'Error';
+                        if (data?.includes('OrtRun')) {
+                            // GPU context is lost after OrtRun failure on this hardware;
+                            // a new Worker can't get the adapter either — must reload page.
+                            statusText.value = 'Error — GPU session ended. Reload to continue.';
+                            messages.value.push({
+                                id: Date.now(), role: 'bot',
+                                content: '⚠️ GPU memory exhausted. The context was too long for this GPU. Reload the page to start a fresh session.'
+                            });
+                        } else {
+                            alert('Error: ' + data);
+                            statusText.value = 'Error';
+                        }
                     }
                 };
 
-                worker.postMessage({ type: 'init' });
+                worker.postMessage({ type: 'init', data: { localModelPath: location.origin + '/gemma-chat-app/models/', memoryBlock: buildMemoryBlock() } });
+            };
+
+            onMounted(() => {
+                loadMemories();
+                loadMessages();
+                scrollToBottom();
+                const historyToRestore = messages.value.map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.content }));
+                startWorker(historyToRestore);
             });
 
             return {
@@ -401,11 +612,17 @@
                 inputText,
                 isGenerating,
                 isLoading,
+                isRecording,
                 statusText,
                 deviceInfo,
                 chatContainer,
+                showMemory,
+                memories,
                 sendMessage,
-                clearMessages
+                clearMessages,
+                exportMemories,
+                clearMemories,
+                toggleVoice
             };
         }
     }).mount('#app');
