@@ -2,7 +2,7 @@
   "name": "gemma-chat-app",
   "version": "1.0.0",
   "type": "module",
-  "description": "Simple browser chat app with Gemma 270M, WebGPU, and Transformers.js",
+  "description": "Browser chat app with Gemma 3 1B ONNX, WebGPU/WASM, Transformers.js 4.2",
   "homepage": "https://1kaiser.github.io/gemma-chat-app",
   "bin": {
     "gemma-chat-app": "./start.js"
@@ -15,12 +15,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.7.2",
+    "@huggingface/transformers": "^4.2.0",
     "express": "^4.21.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",
     "gh-pages": "^6.3.0",
+    "playwright": "^1.61.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.11"
   }
