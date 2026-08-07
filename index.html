@@ -226,6 +226,30 @@
     let generator = null;
     let history = [];
 
+    // Mirrors the pre-flight check used by the official transformers.js-examples
+    // WebGPU demos (llama-3.2-webgpu, gemma-2-2b-jpn-webgpu, phi-3.5-webgpu, smolvlm-webgpu):
+    // request a GPU adapter first so an unsupported browser fails fast with a clean,
+    // readable Error instead of letting pipeline() attempt a WebGPU ORT session and
+    // surface a low-level WASM/ORT abort code.
+    async function hasWebGPU() {
+        if (!('gpu' in navigator)) return false;
+        try {
+            const adapter = await navigator.gpu.requestAdapter();
+            return !!adapter;
+        } catch {
+            return false;
+        }
+    }
+
+    // Extract a readable message from any thrown value. ORT/WASM aborts and
+    // DOMExceptions don't always behave like plain Error objects (missing/blank
+    // .message), so fall back through toString()/String() and keep the stack
+    // and error name when present.
+    function describeError(err) {
+        const message = (err && err.message) || (err && typeof err.toString === 'function' && err.toString()) || String(err);
+        return { message, name: err && err.name, stack: err && err.stack };
+    }
+
     self.addEventListener('message', async (event) => {
         const { type, data } = event.data;
 
@@ -233,27 +257,36 @@
             try {
                 self.postMessage({ type: 'status', data: { message: 'Loading model...' } });
                 const modelId = 'onnx-community/gemma-3-270m-it-ONNX';
+                const progress_callback = (p) => {
+                    if (p.status === 'progress') self.postMessage({ type: 'progress', data: p });
+                };
 
-                try {
+                if (await hasWebGPU()) {
+                    try {
+                        // q4f16 (int4 weights + fp16 activations) is the dtype the official
+                        // WebGPU examples use for GPU execution; q4 (int4 + fp32) is kept for
+                        // the WASM/CPU fallback below.
+                        generator = await pipeline('text-generation', modelId, {
+                            dtype: 'q4f16', device: 'webgpu', progress_callback
+                        });
+                        self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
+                    } catch (e) {
+                        console.error('WebGPU session creation failed, falling back to WASM:', e);
+                        console.warn('WebGPU failed, trying WASM', describeError(e));
+                    }
+                } else {
+                    console.warn('WebGPU not available (no adapter), using WASM');
+                }
+
+                if (!generator) {
                     generator = await pipeline('text-generation', modelId, {
-                        dtype: 'q4', device: 'webgpu',
-                        progress_callback: (p) => {
-                            if(p.status==='progress') self.postMessage({type:'progress', data:p});
-                        }
-                    });
-                    self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
-                } catch(e) {
-                    console.warn("WebGPU failed, trying WASM", e);
-                    generator = await pipeline('text-generation', modelId, {
-                        dtype: 'q4', device: 'wasm',
-                        progress_callback: (p) => {
-                            if(p.status==='progress') self.postMessage({type:'progress', data:p});
-                        }
+                        dtype: 'q4', device: 'wasm', progress_callback
                     });
                     self.postMessage({ type: 'ready', data: { device: 'wasm' } });
                 }
             } catch (err) {
-                self.postMessage({ type: 'error', data: err.message });
+                console.error('Model initialization failed:', err);
+                self.postMessage({ type: 'error', data: describeError(err) });
             }
         } else if (type === 'restore') {
             history = data.map(m => ({
@@ -279,7 +312,8 @@
                 history.push({ role: 'assistant', content: response });
                 self.postMessage({ type: 'complete' });
             } catch (err) {
-                self.postMessage({ type: 'error', data: err.message });
+                console.error('Generation failed:', err);
+                self.postMessage({ type: 'error', data: describeError(err) });
             }
         }
     });
@@ -387,9 +421,13 @@
                     } else if (type === 'status') {
                         statusText.value = data.message;
                     } else if (type === 'error') {
-                        alert('Error: ' + data);
+                        console.error('Worker error:', data);
+                        const message = (data && data.message) || String(data);
+                        alert('Error: ' + message);
                         isGenerating.value = false;
+                        isLoading.value = false;
                         statusText.value = 'Error';
+                        deviceInfo.value = message;
                     }
                 };
 
