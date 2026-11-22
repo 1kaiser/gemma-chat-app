@@ -2,7 +2,7 @@
   "name": "gemma-chat-app",
   "version": "1.0.0",
   "type": "module",
-  "description": "Browser WebGPU/WASM AI chat supporting Gemma 3 (270M, 1B), Gemma 4 E2B, and IBM Granite 4.0 via Transformers.js",
+  "description": "Browser WebGPU/WASM multi-model AI chat supporting Gemma 3/4, Qwen 3/3.5, Liquid AI LFM 2.5/3, IBM Granite 4.0, and SmolLM2 via Transformers.js 4.3",
   "homepage": "https://1kaiser.github.io/gemma-chat-app",
   "bin": {
     "gemma-chat-app": "./start.js"
@@ -16,7 +16,7 @@
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
-    "@huggingface/transformers": "^4.2.0",
+    "@huggingface/transformers": "^4.3.2",
     "express": "^4.21.2"
   },
   "devDependencies": {

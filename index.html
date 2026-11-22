@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemma Chat — Unified WebGPU Browser AI</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>Browser WebGPU AI Chat — Gemma 3/4, Qwen 3.5, LFM 2.5/3 &amp; Granite 4.0</title>
+    <link rel="icon" href="data:,">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -19,11 +20,11 @@
             color: #1f2937;
         }
         .container {
-            background-color: white;
+            background-color: #ffffff;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             width: 100%;
-            max-width: 860px;
+            max-width: 900px;
             height: 92vh;
             display: flex;
             flex-direction: column;
@@ -51,27 +52,27 @@
         .topbar-right {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         .header {
-            padding: 14px 18px;
+            padding: 12px 18px;
             border-bottom: 1px solid #e5e7eb;
             background-color: #ffffff;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
         }
         .header-content h1 {
             margin: 0;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #111827;
         }
         .header-content p {
-            margin: 4px 0 0;
-            font-size: 0.8rem;
+            margin: 3px 0 0;
+            font-size: 0.78rem;
             color: #6b7280;
         }
         .header-controls {
@@ -80,54 +81,38 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        select#model-select {
+        select#model-select, select.ctrl-select {
             padding: 6px 10px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
             font-size: 0.82rem;
-            background: white;
+            background: #ffffff;
             color: #1f2937;
             cursor: pointer;
+            max-width: 300px;
         }
         .btn-sm {
-            padding: 6px 12px;
+            padding: 6px 11px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
+            font-weight: 500;
             cursor: pointer;
             border: 1px solid #d1d5db;
             background: #f9fafb;
             color: #1f2937;
         }
         .btn-sm:hover { background: #e5e7eb; }
-        .btn-sm.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
-        .btn-sm.danger { background: #ef4444; color: white; border-color: #ef4444; }
-        #clear-btn {
-            padding: 6px 12px;
-            background-color: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-        #clear-btn:hover { background-color: #dc2626; }
-        button#mem-btn {
-            padding: 6px 12px;
-            background-color: #f3f4f6;
-            color: #374151;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            position: relative;
-        }
-        button#mem-btn:hover { background-color: #e5e7eb; }
+        .btn-sm.primary { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+        .btn-sm.primary:hover { background: #1d4ed8; }
+        .btn-sm.danger { background: #ef4444; color: #ffffff; border-color: #ef4444; }
+        .btn-sm.danger:hover { background: #dc2626; }
+        button#mem-btn { position: relative; }
         .mem-badge {
             position: absolute;
             top: -5px;
             right: -5px;
-            background: #3b82f6;
-            color: white;
+            background: #2563eb;
+            color: #ffffff;
             border-radius: 9999px;
             font-size: 0.65rem;
             min-width: 16px;
@@ -135,7 +120,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0 3px;
+            padding: 0 4px;
         }
         .chat-wrapper {
             flex: 1;
@@ -147,79 +132,142 @@
         #chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 18px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             background-color: #f9fafb;
         }
+        .suggestions-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .suggestion-chip {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            color: #1e293b;
+            cursor: pointer;
+        }
+        .suggestion-chip:hover { background: #eff6ff; border-color: #2563eb; color: #1d4ed8; }
         .message {
-            max-width: 80%;
-            padding: 12px 16px;
+            max-width: 82%;
+            padding: 11px 15px;
             border-radius: 12px;
-            line-height: 1.5;
-            font-size: 0.95rem;
+            line-height: 1.55;
+            font-size: 0.93rem;
             word-wrap: break-word;
             white-space: pre-wrap;
         }
         .user-message {
             align-self: flex-end;
-            background-color: #3b82f6;
-            color: white;
+            background-color: #2563eb;
+            color: #ffffff;
             border-bottom-right-radius: 4px;
         }
         .bot-message {
             align-self: flex-start;
-            background-color: white;
+            background-color: #ffffff;
             border: 1px solid #e5e7eb;
             color: #1f2937;
             border-bottom-left-radius: 4px;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .bot-message pre {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 10px 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+            font-size: 0.84rem;
+            white-space: pre;
+        }
+        .bot-message code {
+            background: #f1f5f9;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+        .bot-message pre code { background: transparent; padding: 0; color: inherit; }
+        details.thought-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            font-size: 0.82rem;
+            color: #475569;
+        }
+        details.thought-box summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #334155;
+            outline: none;
+        }
+        details.thought-box .thought-content {
+            margin-top: 6px;
+            white-space: pre-wrap;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 6px;
         }
         .input-area {
-            padding: 16px 18px;
-            background-color: white;
+            padding: 14px 18px;
+            background-color: #ffffff;
             border-top: 1px solid #e5e7eb;
             display: flex;
-            gap: 10px;
+            gap: 8px;
+            align-items: center;
         }
-        input[type="text"] {
+        input[type="text"], textarea.settings-input {
             flex: 1;
             padding: 10px 14px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
             outline: none;
             font-size: 0.95rem;
+            font-family: inherit;
         }
-        input[type="text"]:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        input[type="text"]:focus, textarea.settings-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         button#send-btn {
-            padding: 10px 20px;
-            background-color: #3b82f6;
-            color: white;
+            padding: 10px 18px;
+            background-color: #2563eb;
+            color: #ffffff;
             border: none;
             border-radius: 8px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
         }
-        button#send-btn:hover:not(:disabled) { background-color: #2563eb; }
+        button#send-btn:hover:not(:disabled) { background-color: #1d4ed8; }
         button#send-btn:disabled { background-color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+        button#stop-btn {
+            padding: 10px 16px;
+            background-color: #dc2626;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button#stop-btn:hover { background-color: #b91c1c; }
         button#mic-btn {
-            padding: 10px 14px;
+            padding: 10px 13px;
             background-color: #f3f4f6;
             color: #374151;
             border: 1px solid #d1d5db;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.92rem;
             cursor: pointer;
         }
-        button#mic-btn.recording {
-            background-color: #ef4444;
-            color: white;
-            border-color: #ef4444;
-        }
+        button#mic-btn.recording { background-color: #ef4444; color: #ffffff; border-color: #ef4444; }
         button#mic-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .status-bar {
             padding: 8px 18px;
@@ -235,7 +283,7 @@
         #loading-overlay {
             position: absolute;
             inset: 0;
-            background-color: rgba(255, 255, 255, 0.92);
+            background-color: rgba(255, 255, 255, 0.94);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -246,7 +294,7 @@
             backdrop-filter: blur(4px);
         }
         .progress-track {
-            width: 280px;
+            width: 300px;
             max-width: 90%;
             height: 8px;
             background: #e5e7eb;
@@ -256,13 +304,13 @@
         }
         .progress-fill {
             height: 100%;
-            background: #3b82f6;
-            transition: width 0.25s ease;
+            background: #2563eb;
+            transition: width 0.2s ease;
         }
         .overlay-panel {
             position: absolute;
             inset: 0;
-            background: white;
+            background: #ffffff;
             z-index: 60;
             display: flex;
             flex-direction: column;
@@ -281,7 +329,7 @@
             padding: 18px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
             font-size: 0.9rem;
             line-height: 1.6;
         }
@@ -289,6 +337,8 @@
         .mem-entry-ts { color: #6b7280; font-size: 0.75rem; margin-bottom: 4px; }
         .mem-entry-q { font-weight: 600; color: #111827; margin-bottom: 3px; }
         .mem-entry-a { color: #374151; }
+        .settings-row { display: flex; flex-direction: column; gap: 6px; }
+        .settings-row label { font-weight: 600; font-size: 0.85rem; color: #1e293b; }
     </style>
 </head>
 <body>
@@ -299,17 +349,18 @@
             <a href="https://1kaiser.github.io/">&larr; 1kaiser.github.io</a>
             <div class="topbar-right">
                 <a href="https://github.com/1kaiser/gemma-chat-app" target="_blank" rel="noopener">GitHub</a>
-                <button class="btn-sm" id="refs-btn" type="button" @click="showRefs = !showRefs">References</button>
+                <button class="btn-sm" id="settings-btn" type="button" @click="showSettings = !showSettings; showRefs = false; showMemory = false;">Settings</button>
+                <button class="btn-sm" id="refs-btn" type="button" @click="showRefs = !showRefs; showSettings = false; showMemory = false;">References</button>
             </div>
         </div>
 
-        <div v-if="showMemory" class="overlay-panel">
+        <div v-if="showMemory" id="memory-panel" class="overlay-panel">
             <div class="overlay-header">
                 <h2>Memory ({{ memories.length }} entries)</h2>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn-sm primary" type="button" @click="exportMemories">Export .md</button>
                     <button class="btn-sm danger" type="button" @click="clearMemories">Clear All</button>
-                    <button class="btn-sm" type="button" @click="showMemory = false">Close</button>
+                    <button class="btn-sm" id="mem-close-btn" type="button" @click="showMemory = false">Close</button>
                 </div>
             </div>
             <div class="overlay-body">
@@ -324,18 +375,56 @@
             </div>
         </div>
 
-        <div v-if="showRefs" class="overlay-panel">
+        <div v-if="showSettings" id="settings-panel" class="overlay-panel">
+            <div class="overlay-header">
+                <h2>Inference Settings</h2>
+                <button class="btn-sm" id="settings-close-btn" type="button" @click="showSettings = false">Close</button>
+            </div>
+            <div class="overlay-body">
+                <div class="settings-row">
+                    <label for="backend-select">Execution Backend (reloads active model when changed):</label>
+                    <select id="backend-select" class="ctrl-select" v-model="backendPref" @change="switchModel">
+                        <option value="auto">Auto (WebGPU with WASM fallback)</option>
+                        <option value="wasm">Force WASM (CPU fallback)</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <label for="max-tokens-range">Max New Tokens: <strong>{{ maxNewTokens }}</strong></label>
+                    <input id="max-tokens-range" type="range" min="64" max="1024" step="32" v-model.number="maxNewTokens" @change="saveSettings">
+                </div>
+                <div class="settings-row">
+                    <label for="temp-range">Temperature: <strong>{{ temperature.toFixed(2) }}</strong> (0 = greedy deterministic)</label>
+                    <input id="temp-range" type="range" min="0" max="1.2" step="0.05" v-model.number="temperature" @change="saveSettings">
+                </div>
+                <div class="settings-row">
+                    <label for="system-prompt-input">System Prompt:</label>
+                    <textarea id="system-prompt-input" class="settings-input" rows="3" v-model="systemPrompt" @change="saveSettings"></textarea>
+                </div>
+                <div class="settings-row">
+                    <label for="use-memory-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                        <input id="use-memory-checkbox" type="checkbox" v-model="useMemoryInPrompt" @change="saveSettings">
+                        <span>Inject saved memories into prompts (optional; off by default for cleaner, faster multi-turn chat on small models)</span>
+                    </label>
+                </div>
+                <div>
+                    <button class="btn-sm" type="button" @click="resetSettings">Reset Defaults</button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showRefs" id="refs-panel" class="overlay-panel">
             <div class="overlay-header">
                 <h2>References &amp; Model Attributions</h2>
-                <button class="btn-sm" type="button" @click="showRefs = false">Close</button>
+                <button class="btn-sm" id="refs-close-btn" type="button" @click="showRefs = false">Close</button>
             </div>
             <div class="overlay-body">
                 <ul style="margin: 0; padding-left: 18px;">
-                    <li><strong>Gemma 3 Technical Report:</strong> Gemma Team, Google DeepMind (2025). <a href="https://arxiv.org/abs/2503.19786" target="_blank" rel="noopener">arXiv:2503.19786</a> &middot; <a href="https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX" target="_blank" rel="noopener">gemma-3-270m-it-ONNX</a> &middot; <a href="https://huggingface.co/onnx-community/gemma-3-1b-it-ONNX" target="_blank" rel="noopener">gemma-3-1b-it-ONNX</a>.</li>
-                    <li><strong>Gemma 4 E2B ONNX:</strong> <a href="https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX" target="_blank" rel="noopener">onnx-community/gemma-4-E2B-it-ONNX</a> (per-submodule WebGPU quantization).</li>
-                    <li><strong>IBM Granite 4.0:</strong> <a href="https://huggingface.co/onnx-community/granite-4.0-350m-ONNX-web" target="_blank" rel="noopener">onnx-community/granite-4.0-350m-ONNX-web</a>.</li>
-                    <li><strong>Client-Side Inference Engine:</strong> <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Hugging Face Transformers.js (v4.2.0)</a>, <a href="https://onnxruntime.ai/" target="_blank" rel="noopener">ONNX Runtime Web (WebGPU / WASM)</a>, and <a href="https://vuejs.org/" target="_blank" rel="noopener">Vue.js 3</a>.</li>
-                    <li><strong>Project Repository:</strong> <a href="https://github.com/1kaiser/gemma-chat-app" target="_blank" rel="noopener">1kaiser/gemma-chat-app</a> &middot; Back to <a href="https://1kaiser.github.io/">1kaiser.github.io</a>.</li>
+                    <li><strong>Gemma 3 &amp; Gemma 4:</strong> Gemma Team, Google DeepMind (2025). <em>Gemma 3 Technical Report</em> (<a href="https://arxiv.org/abs/2503.19786" target="_blank" rel="noopener">arXiv:2503.19786</a>) &middot; <a href="https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX" target="_blank" rel="noopener">gemma-3-270m-it-ONNX</a>, <a href="https://huggingface.co/onnx-community/gemma-3-1b-it-ONNX" target="_blank" rel="noopener">gemma-3-1b-it-ONNX</a>, <a href="https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX" target="_blank" rel="noopener">gemma-4-E2B-it-ONNX</a>.</li>
+                    <li><strong>Qwen 3 &amp; Qwen 3.5:</strong> Qwen Team (2025–2026). <a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">Qwen3 Technical Report (arXiv:2505.09388)</a> &middot; <a href="https://huggingface.co/onnx-community/Qwen3-0.6B-ONNX-OPT" target="_blank" rel="noopener">Qwen3-0.6B-ONNX-OPT</a>, <a href="https://huggingface.co/onnx-community/Qwen3.5-0.8B-Text-ONNX" target="_blank" rel="noopener">Qwen3.5-0.8B-Text-ONNX</a>.</li>
+                    <li><strong>Liquid AI LFM 2.5 &amp; LFM 3:</strong> Liquid AI Foundation Models &middot; <a href="https://huggingface.co/onnx-community/LFM2.5-350M-ONNX" target="_blank" rel="noopener">LFM2.5-350M-ONNX</a>, <a href="https://huggingface.co/onnx-community/LFM3-1.7B-ONNX" target="_blank" rel="noopener">LFM3-1.7B-ONNX</a>.</li>
+                    <li><strong>IBM Granite 4.0 &amp; Hugging Face SmolLM2:</strong> <a href="https://huggingface.co/onnx-community/granite-4.0-350m-ONNX-web" target="_blank" rel="noopener">granite-4.0-350m-ONNX-web</a>; Allal et al. (2025), <em>SmolLM2</em> (<a href="https://arxiv.org/abs/2502.02737" target="_blank" rel="noopener">arXiv:2502.02737</a>, <a href="https://huggingface.co/onnx-community/SmolLM2-360M-Instruct-ONNX" target="_blank" rel="noopener">SmolLM2-360M-Instruct-ONNX</a>).</li>
+                    <li><strong>Runtime &amp; UI:</strong> <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Hugging Face Transformers.js (v4.3.2)</a>, <a href="https://onnxruntime.ai/" target="_blank" rel="noopener">ONNX Runtime Web (WebGPU / WASM)</a>, and <a href="https://vuejs.org/" target="_blank" rel="noopener">Vue.js 3</a>.</li>
+                    <li><strong>Source:</strong> <a href="https://github.com/1kaiser/gemma-chat-app" target="_blank" rel="noopener">1kaiser/gemma-chat-app</a> &middot; Back to <a href="https://1kaiser.github.io/">1kaiser.github.io</a>.</li>
                 </ul>
             </div>
         </div>
@@ -343,17 +432,22 @@
         <div class="header">
             <div class="header-content">
                 <h1>{{ activeModelMeta.label }}</h1>
-                <p>Vue 3 &middot; Transformers.js 4.2 &middot; WebGPU / WASM</p>
+                <p>Vue 3 &middot; Transformers.js 4.3.2 &middot; {{ activeModelMeta.note }}</p>
             </div>
             <div class="header-controls">
                 <label for="model-select" style="font-size: 0.8rem; font-weight: 600;">Model:</label>
                 <select id="model-select" v-model="selectedModelId" @change="switchModel">
-                    <option v-for="m in modelOptions" :key="m.id" :value="m.id">{{ m.label }} ({{ m.sizeLabel }})</option>
+                    <optgroup label="Fast &amp; Lightweight (~255–470 MB)">
+                        <option v-for="m in fastModels" :key="m.id" :value="m.id">{{ m.label }} ({{ m.sizeLabel }})</option>
+                    </optgroup>
+                    <optgroup label="Mid-Size &amp; Reasoning (760 MB–3.6 GB)">
+                        <option v-for="m in largerModels" :key="m.id" :value="m.id">{{ m.label }} ({{ m.sizeLabel }})</option>
+                    </optgroup>
                 </select>
-                <button id="mem-btn" type="button" @click="showMemory = true" title="View conversation memories">
+                <button id="mem-btn" class="btn-sm" type="button" @click="showMemory = true; showSettings = false; showRefs = false;" title="View conversation memories">
                     Memory <span v-if="memories.length" class="mem-badge">{{ memories.length }}</span>
                 </button>
-                <button id="clear-btn" type="button" @click="clearMessages">Clear</button>
+                <button id="clear-btn" class="btn-sm danger" type="button" @click="clearMessages">Clear</button>
             </div>
         </div>
 
@@ -363,14 +457,21 @@
                 <div class="progress-track">
                     <div class="progress-fill" :style="{ width: loadingProgress + '%' }"></div>
                 </div>
-                <div style="font-size: 0.78rem; color: #6b7280; margin-top: 8px;">{{ deviceInfo }}</div>
-                <button v-if="loadError" class="btn-sm primary" type="button" style="margin-top: 14px;" @click="switchModel">Retry Model Load</button>
+                <div style="font-size: 0.78rem; color: #4b5563; margin-top: 8px;">{{ progressDetail || deviceInfo }}</div>
+                <button v-if="loadError" id="retry-btn" class="btn-sm primary" type="button" style="margin-top: 14px;" @click="switchModel">Retry Model Load</button>
             </div>
 
             <div id="chat-container" ref="chatContainer">
                 <div v-for="msg in messages"
                      :key="msg.id"
-                     :class="['message', msg.role + '-message']">{{ msg.content }}</div>
+                     :class="['message', msg.role === 'user' ? 'user-message' : 'bot-message']">
+                    <template v-if="msg.role === 'user'">{{ msg.content }}</template>
+                    <div v-else v-html="formatBotMessage(msg)"></div>
+                </div>
+
+                <div v-if="!hasUserTurns && !isLoading && !isGenerating" class="suggestions-row">
+                    <button v-for="prompt in starterPrompts" :key="prompt" type="button" class="suggestion-chip" @click="useStarterPrompt(prompt)">{{ prompt }}</button>
+                </div>
             </div>
         </div>
 
@@ -391,12 +492,19 @@
                 :disabled="isGenerating || isLoading"
                 :class="{ recording: isRecording }"
                 :title="isRecording ? 'Stop voice input' : 'Start voice input'"
-            >{{ isRecording ? 'Stop' : 'Mic' }}</button>
+            >{{ isRecording ? 'Stop Mic' : 'Mic' }}</button>
             <button
+                v-if="isGenerating"
+                id="stop-btn"
+                type="button"
+                @click="stopGeneration"
+            >Stop</button>
+            <button
+                v-else
                 id="send-btn"
                 type="button"
                 @click="sendMessage"
-                :disabled="isGenerating || isLoading || !inputText.trim()"
+                :disabled="isLoading || !inputText.trim()"
             >Send</button>
         </div>
 
@@ -414,39 +522,117 @@
         {
             id: 'onnx-community/gemma-3-270m-it-ONNX',
             label: 'Gemma 3 270M IT',
-            sizeLabel: '~200 MB',
-            webgpuDtype: 'q4',
+            sizeLabel: '~273 MB',
+            tier: 'fast',
+            note: 'Compact Google Gemma 3',
+            webgpuF16Dtype: 'q4f16',
+            webgpuNoF16Dtype: 'q4',
             wasmDtype: 'q4',
+            maxHistoryChars: 800,
             supportsSystemRole: false
         },
         {
-            id: 'onnx-community/gemma-3-1b-it-ONNX',
-            label: 'Gemma 3 1B IT',
-            sizeLabel: '~600 MB',
-            webgpuDtype: 'q4f16',
+            id: 'onnx-community/LFM2.5-350M-ONNX',
+            label: 'Liquid LFM 2.5 350M',
+            sizeLabel: '~255 MB',
+            tier: 'fast',
+            note: '2026 fast edge architecture',
+            webgpuF16Dtype: 'q4f16',
+            webgpuNoF16Dtype: 'q4',
             wasmDtype: 'q4',
-            supportsSystemRole: false
+            maxHistoryChars: 3200,
+            supportsSystemRole: true
         },
         {
-            id: 'onnx-community/gemma-4-E2B-it-ONNX',
-            label: 'Gemma 4 E2B IT',
-            sizeLabel: '~1.5 GB',
-            webgpuDtype: { embed_tokens: 'fp16', decoder_model_merged: 'q4' },
+            id: 'onnx-community/Qwen3-0.6B-ONNX-OPT',
+            label: 'Qwen 3 0.6B Opt',
+            sizeLabel: '~355 MB',
+            tier: 'fast',
+            note: 'Reasoning + <think> tags',
+            webgpuF16Dtype: 'q4f16',
+            webgpuNoF16Dtype: 'q4',
             wasmDtype: 'q4',
+            maxHistoryChars: 3200,
             supportsSystemRole: true
         },
         {
             id: 'onnx-community/granite-4.0-350m-ONNX-web',
             label: 'IBM Granite 4.0 350M',
             sizeLabel: '~350 MB',
-            webgpuDtype: 'q4f16',
+            tier: 'fast',
+            note: 'Hybrid Mamba/Transformer',
+            webgpuF16Dtype: 'q4f16',
+            webgpuNoF16Dtype: 'q4',
             wasmDtype: 'q4',
+            maxHistoryChars: 3200,
+            supportsSystemRole: true
+        },
+        {
+            id: 'onnx-community/SmolLM2-360M-Instruct-ONNX',
+            label: 'SmolLM2 360M Instruct (WASM OK)',
+            sizeLabel: '~272 MB',
+            tier: 'fast',
+            note: 'WebGPU + CPU WASM compatible',
+            webgpuF16Dtype: 'q4f16',
+            webgpuNoF16Dtype: 'q4',
+            wasmDtype: 'q4',
+            maxHistoryChars: 3200,
+            supportsSystemRole: true
+        },
+        {
+            id: 'onnx-community/Qwen3.5-0.8B-Text-ONNX',
+            label: 'Qwen 3.5 0.8B Text',
+            sizeLabel: '~469 MB',
+            tier: 'fast',
+            note: '2026 Qwen 3.5 text model',
+            webgpuF16Dtype: 'q4f16',
+            webgpuNoF16Dtype: 'q4',
+            wasmDtype: 'q4',
+            maxHistoryChars: 3200,
+            supportsSystemRole: true
+        },
+        {
+            id: 'onnx-community/gemma-3-1b-it-ONNX',
+            label: 'Gemma 3 1B IT',
+            sizeLabel: '~763 MB',
+            tier: 'large',
+            note: 'Higher quality Gemma 3',
+            webgpuF16Dtype: 'q4f16',
+            webgpuNoF16Dtype: 'q4',
+            wasmDtype: 'q4',
+            maxHistoryChars: 800,
+            supportsSystemRole: false
+        },
+        {
+            id: 'onnx-community/LFM3-1.7B-ONNX',
+            label: 'Liquid LFM 3 1.7B',
+            sizeLabel: '~1.09 GB',
+            tier: 'large',
+            note: '2026 Liquid 1.7B model',
+            webgpuF16Dtype: 'q4f16',
+            webgpuNoF16Dtype: 'q4',
+            wasmDtype: 'q4',
+            maxHistoryChars: 3200,
+            supportsSystemRole: true
+        },
+        {
+            id: 'onnx-community/gemma-4-E2B-it-ONNX',
+            label: 'Gemma 4 E2B IT (8GB+)',
+            sizeLabel: '~3.1 GB',
+            tier: 'large',
+            note: 'Oct 2026 Gemma 4 E2B',
+            webgpuF16Dtype: { embed_tokens: 'q4f16', decoder_model_merged: 'q4f16' },
+            webgpuNoF16Dtype: { embed_tokens: 'q4', decoder_model_merged: 'q4' },
+            wasmDtype: { embed_tokens: 'q4', decoder_model_merged: 'q4' },
+            maxHistoryChars: 3200,
             supportsSystemRole: true
         }
     ];
 
+    const DEFAULT_SYSTEM_PROMPT = 'You are a helpful AI assistant running locally in the browser. Answer concisely and accurately.';
+
     const workerCode = `
-    import { pipeline, TextStreamer, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.min.js';
+    import { pipeline, TextStreamer, InterruptableStoppingCriteria, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js';
     env.allowLocalModels = false;
     env.allowRemoteModels = true;
     env.useBrowserCache = true;
@@ -455,18 +641,20 @@
     let history = [];
     let memoryBlock = '';
     let activeModelConfig = null;
+    let customSystemPrompt = '';
+    let activeStoppingCriteria = null;
     let tpsStart = null;
     let tokenCount = 0;
 
-    const SYSTEM_PROMPT = 'You are a helpful AI assistant running locally in the browser. Answer concisely and accurately.';
-
-    async function hasWebGPU() {
-        if (!('gpu' in navigator)) return false;
+    async function detectWebGPU() {
+        if (!('gpu' in navigator)) return { supported: false, hasF16: false };
         try {
             const adapter = await navigator.gpu.requestAdapter();
-            return !!adapter;
+            if (!adapter) return { supported: false, hasF16: false };
+            const hasF16 = !!(adapter.features && adapter.features.has('shader-f16'));
+            return { supported: true, hasF16 };
         } catch {
-            return false;
+            return { supported: false, hasF16: false };
         }
     }
 
@@ -475,18 +663,76 @@
         return { message, name: err && err.name };
     }
 
-    function buildFullHistory() {
-        const instruction = SYSTEM_PROMPT + (memoryBlock ? '\\n\\nPast context (memories):\\n' + memoryBlock : '');
-        const recent = history.slice(-6).filter(m => m.role !== 'system' && m.content);
-        if (activeModelConfig?.supportsSystemRole) {
-            return [{ role: 'system', content: instruction }, ...recent];
+    function normalizeHistory(rawHistory, maxTurns = 8, maxChars = 3200) {
+        const cleaned = [];
+        for (const item of rawHistory || []) {
+            if (!item || item.isGreeting) continue;
+            const text = typeof item.content === 'string' ? item.content.trim() : '';
+            if (!text) continue;
+            const rawRole = item.role === 'bot' ? 'assistant' : item.role;
+            if (rawRole !== 'user' && rawRole !== 'assistant') continue;
+            if (cleaned.length && cleaned[cleaned.length - 1].role === rawRole) {
+                cleaned[cleaned.length - 1] = {
+                    role: rawRole,
+                    content: cleaned[cleaned.length - 1].content + '\\n\\n' + text
+                };
+            } else {
+                cleaned.push({ role: rawRole, content: text });
+            }
         }
-        // Gemma 3 chat template rejects role === 'system'; prepend context to first user turn instead
+        while (cleaned.length && cleaned[0].role !== 'user') {
+            cleaned.shift();
+        }
+        const lastUser = cleaned.filter(m => m.role === 'user').at(-1);
+        const sliced = cleaned.slice(-maxTurns);
+        while (sliced.length && sliced[0].role !== 'user') {
+            sliced.shift();
+        }
+        if (sliced.length > 1) {
+            const perOlderCap = Math.max(120, Math.floor(maxChars * 0.45));
+            for (let i = 0; i < sliced.length - 1; i++) {
+                if (sliced[i].content.length > perOlderCap) {
+                    sliced[i] = {
+                        role: sliced[i].role,
+                        content: sliced[i].content.slice(0, perOlderCap).trimEnd() + '...'
+                    };
+                }
+            }
+        }
+        const totalChars = () => sliced.reduce((sum, m) => sum + m.content.length, 0);
+        while (totalChars() > maxChars && sliced.length > 1) {
+            sliced.shift();
+            while (sliced.length && sliced[0].role !== 'user') {
+                sliced.shift();
+            }
+        }
+        if (!sliced.length && lastUser) {
+            return [lastUser];
+        }
+        return sliced;
+    }
+
+    function buildMessagesForModel(baseInstruction, isDefaultPrompt) {
+        const recent = normalizeHistory(history, 8, activeModelConfig?.maxHistoryChars || 3200);
         if (!recent.length) return [];
+        const fullInstruction = (baseInstruction || '') + (memoryBlock ? '\\n\\nPast context (memories):\\n' + memoryBlock : '');
+        if (activeModelConfig?.supportsSystemRole) {
+            return [{ role: 'system', content: fullInstruction }, ...recent];
+        }
+        // Gemma 3 chat template forbids system role; only inject context when customized or memory exists
+        if (!memoryBlock && isDefaultPrompt) {
+            return recent;
+        }
         return recent.map((m, idx) => (idx === 0 && m.role === 'user')
-            ? { role: 'user', content: instruction + '\\n\\nUser: ' + m.content }
+            ? { role: 'user', content: 'Context:\\n' + fullInstruction + '\\n\\nQuestion: ' + m.content }
             : m
         );
+    }
+
+    function dtypeLabel(dtypeVal) {
+        if (typeof dtypeVal === 'string') return dtypeVal;
+        if (dtypeVal && typeof dtypeVal === 'object') return dtypeVal.decoder_model_merged || dtypeVal.model || 'q4';
+        return 'q4';
     }
 
     self.addEventListener('message', async (event) => {
@@ -495,7 +741,10 @@
         if (type === 'init') {
             activeModelConfig = data.modelConfig;
             memoryBlock = data.memoryBlock || '';
+            customSystemPrompt = data.systemPrompt || '';
             const modelId = activeModelConfig.id;
+            const forceWasm = data.backendPref === 'wasm';
+            const fileProgress = new Map();
 
             try {
                 let isLocal = false;
@@ -509,53 +758,91 @@
                 env.allowLocalModels = isLocal;
 
                 const progressCb = (p) => {
+                    if (!p || !p.file) return;
                     if (p.status === 'progress') {
-                        self.postMessage({ type: 'progress', data: p });
+                        fileProgress.set(p.file, { loaded: p.loaded || 0, total: p.total || 0 });
+                    } else if (p.status === 'done') {
+                        const prev = fileProgress.get(p.file);
+                        if (prev && prev.total) {
+                            fileProgress.set(p.file, { loaded: prev.total, total: prev.total });
+                        }
+                    } else {
+                        return;
                     }
+                    let loadedBytes = 0;
+                    let totalBytes = 0;
+                    for (const v of fileProgress.values()) {
+                        loadedBytes += v.loaded;
+                        totalBytes += v.total;
+                    }
+                    const percent = totalBytes > 0 ? Math.min(100, Math.round((loadedBytes / totalBytes) * 100)) : 0;
+                    self.postMessage({
+                        type: 'progress',
+                        data: { file: p.file, loadedBytes, totalBytes, percent }
+                    });
                 };
 
-                const webgpuReady = await hasWebGPU();
-                if (webgpuReady) {
-                    self.postMessage({ type: 'status', data: { message: isLocal ? 'Loading ' + activeModelConfig.label + ' (local WebGPU)...' : 'Loading ' + activeModelConfig.label + ' (' + activeModelConfig.sizeLabel + ', WebGPU)...' } });
+                const gpuInfo = forceWasm ? { supported: false, hasF16: false } : await detectWebGPU();
+                if (gpuInfo.supported) {
+                    const chosenGpuDtype = gpuInfo.hasF16 ? activeModelConfig.webgpuF16Dtype : activeModelConfig.webgpuNoF16Dtype;
+                    const label = dtypeLabel(chosenGpuDtype);
+                    self.postMessage({
+                        type: 'status',
+                        data: { message: 'Loading ' + activeModelConfig.label + ' (' + activeModelConfig.sizeLabel + ', WebGPU ' + label + ')...' }
+                    });
                     try {
                         generator = await pipeline('text-generation', modelId, {
-                            dtype: activeModelConfig.webgpuDtype,
+                            dtype: chosenGpuDtype,
                             device: 'webgpu',
                             progress_callback: progressCb
                         });
-                        self.postMessage({ type: 'ready', data: { device: 'webgpu' } });
+                        self.postMessage({ type: 'ready', data: { device: 'webgpu', dtype: label } });
                         return;
                     } catch (gpuErr) {
                         console.warn('WebGPU pipeline failed, falling back to WASM:', gpuErr);
                     }
                 }
 
-                self.postMessage({ type: 'status', data: { message: 'Loading ' + activeModelConfig.label + ' (' + activeModelConfig.sizeLabel + ', WASM)...' } });
+                const wasmDtype = activeModelConfig.wasmDtype || 'q4';
+                const wasmLabel = dtypeLabel(wasmDtype);
+                self.postMessage({
+                    type: 'status',
+                    data: { message: 'Loading ' + activeModelConfig.label + ' (' + activeModelConfig.sizeLabel + ', WASM ' + wasmLabel + ')...' }
+                });
                 generator = await pipeline('text-generation', modelId, {
-                    dtype: activeModelConfig.wasmDtype,
+                    dtype: wasmDtype,
                     device: 'wasm',
                     progress_callback: progressCb
                 });
-                self.postMessage({ type: 'ready', data: { device: 'wasm' } });
+                self.postMessage({ type: 'ready', data: { device: 'wasm', dtype: wasmLabel } });
             } catch (err) {
                 console.error('Model init failed:', err);
-                self.postMessage({ type: 'error', data: describeError(err) });
+                const desc = describeError(err);
+                if (desc.message.includes('GatherBlockQuantized')) {
+                    desc.message = activeModelConfig.label + ' requires WebGPU (its 4-bit quantized graph uses GatherBlockQuantized, which is unsupported in CPU WASM). Switch Execution Backend to Auto (WebGPU), or choose "SmolLM2 360M Instruct (WASM OK)" for CPU-only WASM.';
+                }
+                self.postMessage({ type: 'error', data: desc });
             }
         } else if (type === 'restore') {
-            history = (data || [])
-                .filter(m => m.role !== 'system' && m.content)
-                .map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.content }));
+            history = normalizeHistory(data || [], 12);
         } else if (type === 'memory_update') {
             memoryBlock = data || '';
+        } else if (type === 'system_prompt') {
+            customSystemPrompt = data || '';
         } else if (type === 'reset') {
             history = [];
+        } else if (type === 'stop') {
+            if (activeStoppingCriteria) {
+                activeStoppingCriteria.interrupt();
+            }
         } else if (type === 'generate') {
             tpsStart = null;
             tokenCount = 0;
             const responseTokens = [];
-            history.push({ role: 'user', content: data.message });
+            history = normalizeHistory([...history, { role: 'user', content: data.message }], 12);
 
             try {
+                activeStoppingCriteria = new InterruptableStoppingCriteria();
                 const streamer = new TextStreamer(generator.tokenizer, {
                     skip_prompt: true,
                     skip_special_tokens: true,
@@ -569,19 +856,47 @@
                     }
                 });
 
-                const out = await generator(buildFullHistory(), {
-                    max_new_tokens: 220,
-                    temperature: 0.7,
-                    top_p: 0.95,
-                    do_sample: true,
+                const maxNewTokens = Number(data.maxNewTokens) || 256;
+                const temperature = Number(data.temperature ?? 0.7);
+                const genOpts = {
+                    max_new_tokens: maxNewTokens,
+                    do_sample: temperature > 0.01,
+                    repetition_penalty: 1.12,
+                    stopping_criteria: [activeStoppingCriteria],
                     streamer
-                });
+                };
+                if (genOpts.do_sample) {
+                    genOpts.temperature = temperature;
+                    genOpts.top_p = 0.95;
+                }
+
+                const promptMessages = buildMessagesForModel(customSystemPrompt, !!data.isDefaultSystemPrompt);
+                const out = await generator(promptMessages, genOpts);
+                const interrupted = !!activeStoppingCriteria.interrupted;
+                activeStoppingCriteria = null;
+
                 const fallbackText = out?.[0]?.generated_text?.at?.(-1)?.content || '';
-                const response = responseTokens.length ? responseTokens.join('') : fallbackText;
-                history.push({ role: 'assistant', content: response });
-                self.postMessage({ type: 'complete', data: { response } });
+                const response = (responseTokens.length ? responseTokens.join('') : fallbackText).trim();
+                if (interrupted && response.length < 40) {
+                    history.pop();
+                } else if (response) {
+                    history = normalizeHistory([...history, { role: 'assistant', content: response }], 12);
+                } else {
+                    history.pop();
+                }
+                self.postMessage({ type: 'complete', data: { response, interrupted } });
             } catch (err) {
-                history.pop();
+                activeStoppingCriteria = null;
+                if (responseTokens.length) {
+                    const partial = responseTokens.join('').trim();
+                    if (partial) {
+                        history = normalizeHistory([...history, { role: 'assistant', content: partial }], 12);
+                    } else {
+                        history.pop();
+                    }
+                } else {
+                    history.pop();
+                }
                 console.error('Generation failed:', err);
                 self.postMessage({ type: 'error', data: describeError(err) });
             }
@@ -589,14 +904,37 @@
     });
     `;
 
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function renderMarkdownSafe(escapedText) {
+        // Render fenced code blocks, inline code, and bold from already-escaped text
+        let out = escapedText.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, _lang, code) => {
+            return `<pre><code>${code}</code></pre>`;
+        });
+        out = out.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+        out = out.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+        return out;
+    }
+
     createApp({
         setup() {
-            const STORAGE_KEY = 'gemma_chat_history';
+            const STORAGE_KEY = 'gemma_chat_history_v2';
             const MODEL_KEY = 'gemma_chat_selected_model';
+            const SETTINGS_KEY = 'gemma_chat_settings_v1';
             const MEMORY_PREFIX = 'gmem4_';
             const MAX_MEMORIES = 20;
 
             const modelOptions = MODEL_OPTIONS;
+            const fastModels = computed(() => modelOptions.filter(m => m.tier === 'fast'));
+            const largerModels = computed(() => modelOptions.filter(m => m.tier === 'large'));
+
             const savedModel = localStorage.getItem(MODEL_KEY);
             const selectedModelId = ref(
                 MODEL_OPTIONS.some(m => m.id === savedModel) ? savedModel : MODEL_OPTIONS[0].id
@@ -605,40 +943,111 @@
                 () => MODEL_OPTIONS.find(m => m.id === selectedModelId.value) || MODEL_OPTIONS[0]
             );
 
+            let savedSettings = {};
+            try { savedSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch {}
+            const maxNewTokens = ref(Number(savedSettings.maxNewTokens) || 256);
+            const temperature = ref(typeof savedSettings.temperature === 'number' ? savedSettings.temperature : 0.7);
+            const systemPrompt = ref(savedSettings.systemPrompt || DEFAULT_SYSTEM_PROMPT);
+            const backendPref = ref(savedSettings.backendPref === 'wasm' ? 'wasm' : 'auto');
+            const useMemoryInPrompt = ref(Boolean(savedSettings.useMemoryInPrompt));
+
             const messages = ref([]);
             const inputText = ref('');
             const isGenerating = ref(false);
             const isLoading = ref(true);
             const loadError = ref(false);
             const loadingProgress = ref(0);
+            const progressDetail = ref('');
             const statusText = ref('Initializing model worker...');
             const deviceInfo = ref('Detecting WebGPU / WASM...');
             const chatContainer = ref(null);
             const isRecording = ref(false);
             const showMemory = ref(false);
+            const showSettings = ref(false);
             const showRefs = ref(false);
             const memories = ref([]);
+            const starterPrompts = [
+                'Explain WebGPU inference in 2 sentences.',
+                'Write a Python one-liner to reverse words in a string.',
+                'Name three differences between glaciers and rivers.'
+            ];
+
+            const hasUserTurns = computed(() => messages.value.some(m => m.role === 'user'));
 
             let worker = null;
             let recognition = null;
             let lastUserText = '';
+
+            const postToWorker = (msg) => {
+                if (!worker) return;
+                worker.postMessage(JSON.parse(JSON.stringify(msg)));
+            };
+
+            const saveSettings = () => {
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+                    maxNewTokens: maxNewTokens.value,
+                    temperature: temperature.value,
+                    systemPrompt: systemPrompt.value,
+                    backendPref: backendPref.value,
+                    useMemoryInPrompt: useMemoryInPrompt.value
+                }));
+                postToWorker({ type: 'system_prompt', data: systemPrompt.value });
+                postToWorker({ type: 'memory_update', data: useMemoryInPrompt.value ? buildMemoryBlock() : '' });
+            };
+
+            const resetSettings = () => {
+                maxNewTokens.value = 256;
+                temperature.value = 0.7;
+                systemPrompt.value = DEFAULT_SYSTEM_PROMPT;
+                useMemoryInPrompt.value = false;
+                const backendChanged = backendPref.value !== 'auto';
+                backendPref.value = 'auto';
+                saveSettings();
+                if (backendChanged) switchModel();
+            };
+
+            const formatBotMessage = (msg) => {
+                const raw = msg.content || (isGenerating.value && msg.id === messages.value.at(-1)?.id ? '...' : '');
+                let escaped = escapeHtml(raw);
+                const thoughts = [];
+
+                const captureThought = (_, inner) => {
+                    const clean = inner.trim();
+                    if (clean) thoughts.push(clean);
+                    return '';
+                };
+                escaped = escaped.replace(/&lt;think&gt;([\s\S]*?)&lt;\/think&gt;/g, captureThought);
+                escaped = escaped.replace(/&lt;\|thought\|&gt;([\s\S]*?)&lt;\|end_thought\|&gt;/g, captureThought);
+                escaped = escaped.replace(/&lt;\|channel&gt;thought\s*([\s\S]*?)&lt;channel\|&gt;/g, captureThought);
+                // Handle streaming unclosed thought tag at end of buffer
+                escaped = escaped.replace(/&lt;think&gt;([\s\S]*)$/g, captureThought);
+                escaped = escaped.replace(/&lt;\|channel&gt;thought\s*([\s\S]*)$/g, captureThought);
+
+                const bodyHtml = renderMarkdownSafe(escaped.trim());
+                const thoughtHtml = thoughts.length
+                    ? `<details class="thought-box"><summary>Thought process</summary><div class="thought-content">${thoughts.join('\n\n')}</div></details>`
+                    : '';
+                return thoughtHtml + (bodyHtml || (thoughts.length ? '<em>Thinking...</em>' : ''));
+            };
 
             const loadMemories = () => {
                 const list = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const k = localStorage.key(i);
                     if (k && k.startsWith(MEMORY_PREFIX)) {
-                        try {
-                            list.push(JSON.parse(localStorage.getItem(k)));
-                        } catch {}
+                        try { list.push(JSON.parse(localStorage.getItem(k))); } catch {}
                     }
                 }
                 memories.value = list.sort((a, b) => a.ts - b.ts);
             };
 
             const saveMemoryEntry = (q, a) => {
+                const cleanAnswer = a.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+                if (!cleanAnswer) return;
                 const ts = Date.now();
-                localStorage.setItem(MEMORY_PREFIX + ts, JSON.stringify({ ts, q: q.slice(0, 120), a: a.slice(0, 180) }));
+                localStorage.setItem(MEMORY_PREFIX + ts, JSON.stringify({
+                    ts, q: q.slice(0, 140), a: cleanAnswer.slice(0, 220)
+                }));
                 const keys = Object.keys(localStorage).filter(k => k.startsWith(MEMORY_PREFIX)).sort();
                 if (keys.length > MAX_MEMORIES) {
                     keys.slice(0, keys.length - MAX_MEMORIES).forEach(k => localStorage.removeItem(k));
@@ -655,11 +1064,11 @@
             const clearMemories = () => {
                 Object.keys(localStorage).filter(k => k.startsWith(MEMORY_PREFIX)).forEach(k => localStorage.removeItem(k));
                 loadMemories();
-                if (worker) worker.postMessage({ type: 'memory_update', data: '' });
+                postToWorker({ type: 'memory_update', data: '' });
             };
 
             const exportMemories = () => {
-                const lines = ['# Gemma Chat — Conversation Memory\n'];
+                const lines = ['# Browser AI Chat — Conversation Memory\n'];
                 memories.value.forEach(m => {
                     lines.push(`## ${new Date(m.ts).toLocaleString()}\n**Q:** ${m.q}\n\n**A:** ${m.a}\n`);
                 });
@@ -667,22 +1076,30 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `gemma-memory-${new Date().toISOString().slice(0, 10)}.md`;
+                a.download = `chat-memory-${new Date().toISOString().slice(0, 10)}.md`;
                 a.click();
                 URL.revokeObjectURL(url);
             };
+
+            const greetingMessage = () => ({
+                id: 0,
+                role: 'bot',
+                isGreeting: true,
+                content: `Hello! Ready to run ${activeModelMeta.value.label} entirely in your browser.`
+            });
 
             const loadMessages = () => {
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (stored) {
                     try {
-                        messages.value = JSON.parse(stored);
-                        return;
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed) && parsed.length) {
+                            messages.value = parsed;
+                            return;
+                        }
                     } catch {}
                 }
-                messages.value = [
-                    { id: 0, role: 'bot', content: `Hello! Ready to run ${activeModelMeta.value.label} entirely in your browser.` }
-                ];
+                messages.value = [greetingMessage()];
             };
 
             const scrollToBottom = async () => {
@@ -699,8 +1116,13 @@
 
             const clearMessages = () => {
                 localStorage.removeItem(STORAGE_KEY);
-                messages.value = [{ id: 0, role: 'bot', content: 'Chat history cleared.' }];
-                if (worker) worker.postMessage({ type: 'reset' });
+                messages.value = [{
+                    id: Date.now(),
+                    role: 'bot',
+                    isGreeting: true,
+                    content: `Chat history cleared. ${activeModelMeta.value.label} is ready.`
+                }];
+                postToWorker({ type: 'reset' });
             };
 
             const toggleVoice = () => {
@@ -735,6 +1157,12 @@
                 recognition.start();
             };
 
+            const stopGeneration = () => {
+                if (!isGenerating.value || !worker) return;
+                statusText.value = 'Stopping generation...';
+                postToWorker({ type: 'stop' });
+            };
+
             const sendMessage = () => {
                 const text = inputText.value.trim();
                 if (!text || isGenerating.value || isLoading.value) return;
@@ -745,7 +1173,20 @@
                 inputText.value = '';
                 isGenerating.value = true;
                 statusText.value = 'Generating...';
-                worker.postMessage({ type: 'generate', data: { message: text } });
+                postToWorker({
+                    type: 'generate',
+                    data: {
+                        message: text,
+                        maxNewTokens: maxNewTokens.value,
+                        temperature: temperature.value,
+                        isDefaultSystemPrompt: systemPrompt.value === DEFAULT_SYSTEM_PROMPT
+                    }
+                });
+            };
+
+            const useStarterPrompt = (prompt) => {
+                inputText.value = prompt;
+                sendMessage();
             };
 
             const startWorker = (historyToRestore) => {
@@ -754,8 +1195,10 @@
                     worker = null;
                 }
                 isLoading.value = true;
+                isGenerating.value = false;
                 loadError.value = false;
                 loadingProgress.value = 0;
+                progressDetail.value = `Preparing ${activeModelMeta.value.label}...`;
 
                 const blob = new Blob([workerCode], { type: 'application/javascript' });
                 worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
@@ -770,49 +1213,57 @@
                 worker.onmessage = (e) => {
                     const { type, data } = e.data;
                     if (type === 'progress') {
-                        if (typeof data.progress === 'number') {
-                            loadingProgress.value = Math.min(100, Math.round(data.progress));
-                        }
-                        if (data.file) {
-                            statusText.value = `Downloading ${data.file} (${loadingProgress.value}%)`;
-                        }
+                        loadingProgress.value = data.percent;
+                        const mbLoaded = (data.loadedBytes / (1024 * 1024)).toFixed(1);
+                        const mbTotal = data.totalBytes > 0 ? (data.totalBytes / (1024 * 1024)).toFixed(1) : '?';
+                        statusText.value = `Downloading ${activeModelMeta.value.label}... (${data.percent}%)`;
+                        progressDetail.value = `${mbLoaded} / ${mbTotal} MB (${data.file})`;
                     } else if (type === 'ready') {
                         isLoading.value = false;
                         loadError.value = false;
                         loadingProgress.value = 100;
+                        progressDetail.value = '';
                         statusText.value = 'Ready';
-                        deviceInfo.value = `${activeModelMeta.value.label} on ${data.device === 'webgpu' ? 'WebGPU' : 'WASM'}`;
+                        const backendTag = data.device === 'webgpu' ? `WebGPU (${data.dtype || 'q4'})` : `WASM (${data.dtype || 'q4'})`;
+                        deviceInfo.value = `${activeModelMeta.value.label} · ${backendTag}`;
                         if (historyToRestore?.length) {
-                            worker.postMessage({ type: 'restore', data: historyToRestore });
+                            postToWorker({ type: 'restore', data: historyToRestore });
                         }
                     } else if (type === 'token') {
                         const lastMsg = messages.value[messages.value.length - 1];
-                        if (lastMsg && lastMsg.role === 'bot') {
+                        if (lastMsg && lastMsg.role === 'bot' && !lastMsg.isGreeting) {
                             lastMsg.content += data.token;
                         }
                         if (data.tps) statusText.value = `Generating... ${data.tps} tok/s`;
                     } else if (type === 'complete') {
                         isGenerating.value = false;
-                        statusText.value = 'Ready';
+                        const lastMsg = messages.value[messages.value.length - 1];
+                        if (lastMsg && lastMsg.role === 'bot' && !lastMsg.isGreeting && !lastMsg.content.trim() && data?.response) {
+                            lastMsg.content = data.response;
+                        }
+                        if (lastMsg && lastMsg.role === 'bot' && !lastMsg.isGreeting && !lastMsg.content.trim()) {
+                            messages.value.pop();
+                        }
+                        statusText.value = data?.interrupted ? 'Stopped (Ready)' : 'Ready';
                         document.getElementById('user-input')?.focus();
-                        const lastBot = messages.value.filter(m => m.role === 'bot' && m.content).at(-1);
-                        if (lastUserText && lastBot?.content) {
+                        const lastBot = messages.value.filter(m => m.role === 'bot' && !m.isGreeting && m.content.trim()).at(-1);
+                        if (!data?.interrupted && lastUserText && lastBot?.content) {
                             saveMemoryEntry(lastUserText, lastBot.content);
-                            if (worker) worker.postMessage({ type: 'memory_update', data: buildMemoryBlock() });
+                            postToWorker({ type: 'memory_update', data: useMemoryInPrompt.value ? buildMemoryBlock() : '' });
                         }
                     } else if (type === 'status') {
                         statusText.value = data.message;
                     } else if (type === 'error') {
                         const message = (data && data.message) || String(data);
                         const lastBotMsg = messages.value[messages.value.length - 1];
-                        if (lastBotMsg?.role === 'bot' && !lastBotMsg.content) {
+                        if (lastBotMsg?.role === 'bot' && !lastBotMsg.isGreeting && !lastBotMsg.content.trim()) {
                             messages.value.pop();
                         }
                         isGenerating.value = false;
                         loadError.value = isLoading.value;
                         if (message.includes('OrtRun')) {
-                            statusText.value = 'GPU session ended (context memory limit). Reload page to reset.';
-                            deviceInfo.value = 'GPU OOM';
+                            statusText.value = 'GPU session ended (memory limit). Switch to a smaller model or reload.';
+                            deviceInfo.value = 'GPU Memory Error';
                         } else {
                             statusText.value = `Error: ${message}`;
                             deviceInfo.value = message;
@@ -820,43 +1271,45 @@
                     }
                 };
 
-                worker.postMessage({
+                const allowLocalProbe = location.search.includes('local=1');
+                postToWorker({
                     type: 'init',
                     data: {
                         modelConfig: activeModelMeta.value,
-                        localModelPath: location.origin + '/gemma-chat-app/models/',
-                        memoryBlock: buildMemoryBlock()
+                        backendPref: backendPref.value,
+                        systemPrompt: systemPrompt.value,
+                        localModelPath: allowLocalProbe ? (location.origin + '/gemma-chat-app/models/') : null,
+                        memoryBlock: useMemoryInPrompt.value ? buildMemoryBlock() : ''
                     }
                 });
             };
 
             const switchModel = () => {
                 localStorage.setItem(MODEL_KEY, selectedModelId.value);
-                const historyToRestore = messages.value.map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.content }));
+                saveSettings();
+                const historyToRestore = messages.value.filter(m => !m.isGreeting && m.content.trim());
                 statusText.value = `Switching to ${activeModelMeta.value.label}...`;
                 deviceInfo.value = 'Restarting worker...';
                 startWorker(historyToRestore);
             };
 
-            window._appendToken = (token) => {
-                const lastMsg = messages.value[messages.value.length - 1];
-                if (lastMsg && lastMsg.role === 'bot') lastMsg.content += token;
-            };
-            window._setGenerating = (val) => {
-                isGenerating.value = val;
-                if (!val) statusText.value = 'Ready';
-            };
-
             onMounted(() => {
+                window.addEventListener('beforeunload', () => {
+                    if (worker) {
+                        worker.terminate();
+                        worker = null;
+                    }
+                });
                 loadMemories();
                 loadMessages();
                 scrollToBottom();
-                const historyToRestore = messages.value.map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.content }));
+                const historyToRestore = messages.value.filter(m => !m.isGreeting && m.content.trim());
                 startWorker(historyToRestore);
             });
 
             return {
-                modelOptions,
+                fastModels,
+                largerModels,
                 selectedModelId,
                 activeModelMeta,
                 messages,
@@ -865,19 +1318,33 @@
                 isLoading,
                 loadError,
                 loadingProgress,
+                progressDetail,
                 statusText,
                 deviceInfo,
                 chatContainer,
                 isRecording,
                 showMemory,
+                showSettings,
                 showRefs,
                 memories,
+                starterPrompts,
+                hasUserTurns,
+                maxNewTokens,
+                temperature,
+                systemPrompt,
+                backendPref,
+                useMemoryInPrompt,
+                formatBotMessage,
                 sendMessage,
+                stopGeneration,
+                useStarterPrompt,
                 clearMessages,
                 exportMemories,
                 clearMemories,
                 toggleVoice,
-                switchModel
+                switchModel,
+                saveSettings,
+                resetSettings
             };
         }
     }).mount('#app');

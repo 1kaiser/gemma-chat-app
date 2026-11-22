@@ -1,10 +1,10 @@
-# 🪩 Gemma 3 270M - Universal Browser AI 🪩
+# Multi-Model WebGPU Browser AI Chat (Gemma 3/4, Qwen 3.5, LFM 2.5/3, Granite 4.0, SmolLM2)
 
 ## 🌐 [Live Demo](https://1kaiser.github.io/gemma-chat-app/)
 
 ![Gemma Chat Demo](gemma-chat-demo-final.gif)
 
-A simple browser-based chat application using **Gemma 270M** with **automatic WebGPU/WASM fallback**, **Transformers.js**, and **Web Workers** for a fully local AI chat experience that works in any modern browser.
+A client-side browser AI chat workspace built with **Transformers.js v4.3.2**, **WebGPU (`shader-f16` auto-detection)** with **WASM fallback**, **Web Workers**, and **Vue 3** — supporting Google **Gemma 3 & Gemma 4**, Alibaba **Qwen 3 & Qwen 3.5**, Liquid AI **LFM 2.5 & LFM 3**, IBM **Granite 4.0**, and Hugging Face **SmolLM2**.
 
 ## 🧠 About Gemma 3 270M
 
@@ -405,7 +405,12 @@ MIT License - feel free to use this project for learning and development!
 
 ### Key Academic References
 - Gemma Team, Google DeepMind (2025). *Gemma 3 Technical Report*. [arXiv:2503.19786](https://arxiv.org/abs/2503.19786).
-- Supported ONNX Models: [`gemma-3-270m-it-ONNX`](https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX), [`gemma-3-1b-it-ONNX`](https://huggingface.co/onnx-community/gemma-3-1b-it-ONNX), [`gemma-4-E2B-it-ONNX`](https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX), [`granite-4.0-350m-ONNX-web`](https://huggingface.co/onnx-community/granite-4.0-350m-ONNX-web).
+- Supported ONNX Models (`onnx-community`, `@huggingface/transformers@4.3.2`):
+  - **Note on CPU WASM fallback**: `SmolLM2 360M Instruct` is verified for CPU-only WASM (`q4`) fallback; 4-bit quantized Gemma 3/4, LFM 2.5/3, Qwen 3/3.5, and Granite 4.0 models require WebGPU (`GatherBlockQuantized` is not implemented in ONNX Runtime CPU WASM).
+  - **Google Gemma**: [`gemma-3-270m-it-ONNX`](https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX), [`gemma-3-1b-it-ONNX`](https://huggingface.co/onnx-community/gemma-3-1b-it-ONNX), [`gemma-4-E2B-it-ONNX`](https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX).
+  - **Alibaba Qwen**: [`Qwen3-0.6B-ONNX-OPT`](https://huggingface.co/onnx-community/Qwen3-0.6B-ONNX-OPT), [`Qwen3.5-0.8B-Text-ONNX`](https://huggingface.co/onnx-community/Qwen3.5-0.8B-Text-ONNX) ([arXiv:2505.09388](https://arxiv.org/abs/2505.09388)).
+  - **Liquid AI**: [`LFM2.5-350M-ONNX`](https://huggingface.co/onnx-community/LFM2.5-350M-ONNX), [`LFM3-1.7B-ONNX`](https://huggingface.co/onnx-community/LFM3-1.7B-ONNX).
+  - **IBM Granite & Hugging Face SmolLM2**: [`granite-4.0-350m-ONNX-web`](https://huggingface.co/onnx-community/granite-4.0-350m-ONNX-web), [`SmolLM2-360M-Instruct-ONNX`](https://huggingface.co/onnx-community/SmolLM2-360M-Instruct-ONNX) ([arXiv:2502.02737](https://arxiv.org/abs/2502.02737)).
 - Ruan, C.F., Qin, Y., Zhou, X., et al. (2024). "WebLLM: A High-Performance In-Browser LLM Inference Engine." [arXiv:2412.15803](https://arxiv.org/abs/2412.15803).
 - [Hugging Face Transformers.js v4](https://huggingface.co/docs/transformers.js) & [ONNX Runtime Web](https://onnxruntime.ai/).
 - Part of [1kaiser.github.io](https://1kaiser.github.io/).
