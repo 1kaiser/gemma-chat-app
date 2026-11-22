@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemma Chat — Unified WebGPU Browser AI</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>Browser WebGPU AI Chat — Gemma 3/4, Qwen 3.5, LFM 2.5/3 &amp; Granite 4.0</title>
+    <link rel="icon" href="data:,">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -19,11 +20,11 @@
             color: #1f2937;
         }
         .container {
-            background-color: white;
+            background-color: #ffffff;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             width: 100%;
-            max-width: 860px;
+            max-width: 900px;
             height: 92vh;
             display: flex;
             flex-direction: column;
@@ -51,27 +52,27 @@
         .topbar-right {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         .header {
-            padding: 14px 18px;
+            padding: 12px 18px;
             border-bottom: 1px solid #e5e7eb;
             background-color: #ffffff;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
         }
         .header-content h1 {
             margin: 0;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #111827;
         }
         .header-content p {
-            margin: 4px 0 0;
-            font-size: 0.8rem;
+            margin: 3px 0 0;
+            font-size: 0.78rem;
             color: #6b7280;
         }
         .header-controls {
@@ -80,54 +81,38 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        select#model-select {
+        select#model-select, select.ctrl-select {
             padding: 6px 10px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
             font-size: 0.82rem;
-            background: white;
+            background: #ffffff;
             color: #1f2937;
             cursor: pointer;
+            max-width: 300px;
         }
         .btn-sm {
-            padding: 6px 12px;
+            padding: 6px 11px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
+            font-weight: 500;
             cursor: pointer;
             border: 1px solid #d1d5db;
             background: #f9fafb;
             color: #1f2937;
         }
         .btn-sm:hover { background: #e5e7eb; }
-        .btn-sm.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
-        .btn-sm.danger { background: #ef4444; color: white; border-color: #ef4444; }
-        #clear-btn {
-            padding: 6px 12px;
-            background-color: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-        #clear-btn:hover { background-color: #dc2626; }
-        button#mem-btn {
-            padding: 6px 12px;
-            background-color: #f3f4f6;
-            color: #374151;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            position: relative;
-        }
-        button#mem-btn:hover { background-color: #e5e7eb; }
+        .btn-sm.primary { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+        .btn-sm.primary:hover { background: #1d4ed8; }
+        .btn-sm.danger { background: #ef4444; color: #ffffff; border-color: #ef4444; }
+        .btn-sm.danger:hover { background: #dc2626; }
+        button#mem-btn { position: relative; }
         .mem-badge {
             position: absolute;
             top: -5px;
             right: -5px;
-            background: #3b82f6;
-            color: white;
+            background: #2563eb;
+            color: #ffffff;
             border-radius: 9999px;
             font-size: 0.65rem;
             min-width: 16px;
@@ -135,7 +120,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0 3px;
+            padding: 0 4px;
         }
         .chat-wrapper {
             flex: 1;
@@ -147,79 +132,142 @@
         #chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 18px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             background-color: #f9fafb;
         }
+        .suggestions-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .suggestion-chip {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            color: #1e293b;
+            cursor: pointer;
+        }
+        .suggestion-chip:hover { background: #eff6ff; border-color: #2563eb; color: #1d4ed8; }
         .message {
-            max-width: 80%;
-            padding: 12px 16px;
+            max-width: 82%;
+            padding: 11px 15px;
             border-radius: 12px;
-            line-height: 1.5;
-            font-size: 0.95rem;
+            line-height: 1.55;
+            font-size: 0.93rem;
             word-wrap: break-word;
             white-space: pre-wrap;
         }
         .user-message {
             align-self: flex-end;
-            background-color: #3b82f6;
-            color: white;
+            background-color: #2563eb;
+            color: #ffffff;
             border-bottom-right-radius: 4px;
         }
         .bot-message {
             align-self: flex-start;
-            background-color: white;
+            background-color: #ffffff;
             border: 1px solid #e5e7eb;
             color: #1f2937;
             border-bottom-left-radius: 4px;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .bot-message pre {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 10px 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+            font-size: 0.84rem;
+            white-space: pre;
+        }
+        .bot-message code {
+            background: #f1f5f9;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+        .bot-message pre code { background: transparent; padding: 0; color: inherit; }
+        details.thought-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            font-size: 0.82rem;
+            color: #475569;
+        }
+        details.thought-box summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #334155;
+            outline: none;
+        }
+        details.thought-box .thought-content {
+            margin-top: 6px;
+            white-space: pre-wrap;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 6px;
         }
         .input-area {
-            padding: 16px 18px;
-            background-color: white;
+            padding: 14px 18px;
+            background-color: #ffffff;
             border-top: 1px solid #e5e7eb;
             display: flex;
-            gap: 10px;
+            gap: 8px;
+            align-items: center;
         }
-        input[type="text"] {
+        input[type="text"], textarea.settings-input {
             flex: 1;
             padding: 10px 14px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
             outline: none;
             font-size: 0.95rem;
+            font-family: inherit;
         }
-        input[type="text"]:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        input[type="text"]:focus, textarea.settings-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         button#send-btn {
-            padding: 10px 20px;
-            background-color: #3b82f6;
-            color: white;
+            padding: 10px 18px;
+            background-color: #2563eb;
+            color: #ffffff;
             border: none;
             border-radius: 8px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
         }
-        button#send-btn:hover:not(:disabled) { background-color: #2563eb; }
+        button#send-btn:hover:not(:disabled) { background-color: #1d4ed8; }
         button#send-btn:disabled { background-color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+        button#stop-btn {
+            padding: 10px 16px;
+            background-color: #dc2626;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button#stop-btn:hover { background-color: #b91c1c; }
         button#mic-btn {
-            padding: 10px 14px;
+            padding: 10px 13px;
             background-color: #f3f4f6;
             color: #374151;
             border: 1px solid #d1d5db;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.92rem;
             cursor: pointer;
         }
-        button#mic-btn.recording {
-            background-color: #ef4444;
-            color: white;
-            border-color: #ef4444;
-        }
+        button#mic-btn.recording { background-color: #ef4444; color: #ffffff; border-color: #ef4444; }
         button#mic-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .status-bar {
             padding: 8px 18px;
@@ -235,7 +283,7 @@
         #loading-overlay {
             position: absolute;
             inset: 0;
-            background-color: rgba(255, 255, 255, 0.92);
+            background-color: rgba(255, 255, 255, 0.94);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -246,7 +294,7 @@
             backdrop-filter: blur(4px);
         }
         .progress-track {
-            width: 280px;
+            width: 300px;
             max-width: 90%;
             height: 8px;
             background: #e5e7eb;
@@ -256,13 +304,13 @@
         }
         .progress-fill {
             height: 100%;
-            background: #3b82f6;
-            transition: width 0.25s ease;
+            background: #2563eb;
+            transition: width 0.2s ease;
         }
         .overlay-panel {
             position: absolute;
             inset: 0;
-            background: white;
+            background: #ffffff;
             z-index: 60;
             display: flex;
             flex-direction: column;
@@ -281,7 +329,7 @@
             padding: 18px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
             font-size: 0.9rem;
             line-height: 1.6;
         }
@@ -289,8 +337,10 @@
         .mem-entry-ts { color: #6b7280; font-size: 0.75rem; margin-bottom: 4px; }
         .mem-entry-q { font-weight: 600; color: #111827; margin-bottom: 3px; }
         .mem-entry-a { color: #374151; }
+        .settings-row { display: flex; flex-direction: column; gap: 6px; }
+        .settings-row label { font-weight: 600; font-size: 0.85rem; color: #1e293b; }
     </style>
-  <script type="module" crossorigin src="/gemma-chat-app/assets/index-BrbXFNKQ.js"></script>
+  <script type="module" crossorigin src="/gemma-chat-app/assets/index-Sobxu9Rz.js"></script>
 </head>
 <body>
 
@@ -300,17 +350,18 @@
             <a href="https://1kaiser.github.io/">&larr; 1kaiser.github.io</a>
             <div class="topbar-right">
                 <a href="https://github.com/1kaiser/gemma-chat-app" target="_blank" rel="noopener">GitHub</a>
-                <button class="btn-sm" id="refs-btn" type="button" @click="showRefs = !showRefs">References</button>
+                <button class="btn-sm" id="settings-btn" type="button" @click="showSettings = !showSettings; showRefs = false; showMemory = false;">Settings</button>
+                <button class="btn-sm" id="refs-btn" type="button" @click="showRefs = !showRefs; showSettings = false; showMemory = false;">References</button>
             </div>
         </div>
 
-        <div v-if="showMemory" class="overlay-panel">
+        <div v-if="showMemory" id="memory-panel" class="overlay-panel">
             <div class="overlay-header">
                 <h2>Memory ({{ memories.length }} entries)</h2>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn-sm primary" type="button" @click="exportMemories">Export .md</button>
                     <button class="btn-sm danger" type="button" @click="clearMemories">Clear All</button>
-                    <button class="btn-sm" type="button" @click="showMemory = false">Close</button>
+                    <button class="btn-sm" id="mem-close-btn" type="button" @click="showMemory = false">Close</button>
                 </div>
             </div>
             <div class="overlay-body">
@@ -325,18 +376,56 @@
             </div>
         </div>
 
-        <div v-if="showRefs" class="overlay-panel">
+        <div v-if="showSettings" id="settings-panel" class="overlay-panel">
+            <div class="overlay-header">
+                <h2>Inference Settings</h2>
+                <button class="btn-sm" id="settings-close-btn" type="button" @click="showSettings = false">Close</button>
+            </div>
+            <div class="overlay-body">
+                <div class="settings-row">
+                    <label for="backend-select">Execution Backend (reloads active model when changed):</label>
+                    <select id="backend-select" class="ctrl-select" v-model="backendPref" @change="switchModel">
+                        <option value="auto">Auto (WebGPU with WASM fallback)</option>
+                        <option value="wasm">Force WASM (CPU fallback)</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <label for="max-tokens-range">Max New Tokens: <strong>{{ maxNewTokens }}</strong></label>
+                    <input id="max-tokens-range" type="range" min="64" max="1024" step="32" v-model.number="maxNewTokens" @change="saveSettings">
+                </div>
+                <div class="settings-row">
+                    <label for="temp-range">Temperature: <strong>{{ temperature.toFixed(2) }}</strong> (0 = greedy deterministic)</label>
+                    <input id="temp-range" type="range" min="0" max="1.2" step="0.05" v-model.number="temperature" @change="saveSettings">
+                </div>
+                <div class="settings-row">
+                    <label for="system-prompt-input">System Prompt:</label>
+                    <textarea id="system-prompt-input" class="settings-input" rows="3" v-model="systemPrompt" @change="saveSettings"></textarea>
+                </div>
+                <div class="settings-row">
+                    <label for="use-memory-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                        <input id="use-memory-checkbox" type="checkbox" v-model="useMemoryInPrompt" @change="saveSettings">
+                        <span>Inject saved memories into prompts (optional; off by default for cleaner, faster multi-turn chat on small models)</span>
+                    </label>
+                </div>
+                <div>
+                    <button class="btn-sm" type="button" @click="resetSettings">Reset Defaults</button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showRefs" id="refs-panel" class="overlay-panel">
             <div class="overlay-header">
                 <h2>References &amp; Model Attributions</h2>
-                <button class="btn-sm" type="button" @click="showRefs = false">Close</button>
+                <button class="btn-sm" id="refs-close-btn" type="button" @click="showRefs = false">Close</button>
             </div>
             <div class="overlay-body">
                 <ul style="margin: 0; padding-left: 18px;">
-                    <li><strong>Gemma 3 Technical Report:</strong> Gemma Team, Google DeepMind (2025). <a href="https://arxiv.org/abs/2503.19786" target="_blank" rel="noopener">arXiv:2503.19786</a> &middot; <a href="https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX" target="_blank" rel="noopener">gemma-3-270m-it-ONNX</a> &middot; <a href="https://huggingface.co/onnx-community/gemma-3-1b-it-ONNX" target="_blank" rel="noopener">gemma-3-1b-it-ONNX</a>.</li>
-                    <li><strong>Gemma 4 E2B ONNX:</strong> <a href="https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX" target="_blank" rel="noopener">onnx-community/gemma-4-E2B-it-ONNX</a> (per-submodule WebGPU quantization).</li>
-                    <li><strong>IBM Granite 4.0:</strong> <a href="https://huggingface.co/onnx-community/granite-4.0-350m-ONNX-web" target="_blank" rel="noopener">onnx-community/granite-4.0-350m-ONNX-web</a>.</li>
-                    <li><strong>Client-Side Inference Engine:</strong> <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Hugging Face Transformers.js (v4.2.0)</a>, <a href="https://onnxruntime.ai/" target="_blank" rel="noopener">ONNX Runtime Web (WebGPU / WASM)</a>, and <a href="https://vuejs.org/" target="_blank" rel="noopener">Vue.js 3</a>.</li>
-                    <li><strong>Project Repository:</strong> <a href="https://github.com/1kaiser/gemma-chat-app" target="_blank" rel="noopener">1kaiser/gemma-chat-app</a> &middot; Back to <a href="https://1kaiser.github.io/">1kaiser.github.io</a>.</li>
+                    <li><strong>Gemma 3 &amp; Gemma 4:</strong> Gemma Team, Google DeepMind (2025). <em>Gemma 3 Technical Report</em> (<a href="https://arxiv.org/abs/2503.19786" target="_blank" rel="noopener">arXiv:2503.19786</a>) &middot; <a href="https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX" target="_blank" rel="noopener">gemma-3-270m-it-ONNX</a>, <a href="https://huggingface.co/onnx-community/gemma-3-1b-it-ONNX" target="_blank" rel="noopener">gemma-3-1b-it-ONNX</a>, <a href="https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX" target="_blank" rel="noopener">gemma-4-E2B-it-ONNX</a>.</li>
+                    <li><strong>Qwen 3 &amp; Qwen 3.5:</strong> Qwen Team (2025–2026). <a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">Qwen3 Technical Report (arXiv:2505.09388)</a> &middot; <a href="https://huggingface.co/onnx-community/Qwen3-0.6B-ONNX-OPT" target="_blank" rel="noopener">Qwen3-0.6B-ONNX-OPT</a>, <a href="https://huggingface.co/onnx-community/Qwen3.5-0.8B-Text-ONNX" target="_blank" rel="noopener">Qwen3.5-0.8B-Text-ONNX</a>.</li>
+                    <li><strong>Liquid AI LFM 2.5 &amp; LFM 3:</strong> Liquid AI Foundation Models &middot; <a href="https://huggingface.co/onnx-community/LFM2.5-350M-ONNX" target="_blank" rel="noopener">LFM2.5-350M-ONNX</a>, <a href="https://huggingface.co/onnx-community/LFM3-1.7B-ONNX" target="_blank" rel="noopener">LFM3-1.7B-ONNX</a>.</li>
+                    <li><strong>IBM Granite 4.0 &amp; Hugging Face SmolLM2:</strong> <a href="https://huggingface.co/onnx-community/granite-4.0-350m-ONNX-web" target="_blank" rel="noopener">granite-4.0-350m-ONNX-web</a>; Allal et al. (2025), <em>SmolLM2</em> (<a href="https://arxiv.org/abs/2502.02737" target="_blank" rel="noopener">arXiv:2502.02737</a>, <a href="https://huggingface.co/onnx-community/SmolLM2-360M-Instruct-ONNX" target="_blank" rel="noopener">SmolLM2-360M-Instruct-ONNX</a>).</li>
+                    <li><strong>Runtime &amp; UI:</strong> <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">Hugging Face Transformers.js (v4.3.2)</a>, <a href="https://onnxruntime.ai/" target="_blank" rel="noopener">ONNX Runtime Web (WebGPU / WASM)</a>, and <a href="https://vuejs.org/" target="_blank" rel="noopener">Vue.js 3</a>.</li>
+                    <li><strong>Source:</strong> <a href="https://github.com/1kaiser/gemma-chat-app" target="_blank" rel="noopener">1kaiser/gemma-chat-app</a> &middot; Back to <a href="https://1kaiser.github.io/">1kaiser.github.io</a>.</li>
                 </ul>
             </div>
         </div>
@@ -344,17 +433,22 @@
         <div class="header">
             <div class="header-content">
                 <h1>{{ activeModelMeta.label }}</h1>
-                <p>Vue 3 &middot; Transformers.js 4.2 &middot; WebGPU / WASM</p>
+                <p>Vue 3 &middot; Transformers.js 4.3.2 &middot; {{ activeModelMeta.note }}</p>
             </div>
             <div class="header-controls">
                 <label for="model-select" style="font-size: 0.8rem; font-weight: 600;">Model:</label>
                 <select id="model-select" v-model="selectedModelId" @change="switchModel">
-                    <option v-for="m in modelOptions" :key="m.id" :value="m.id">{{ m.label }} ({{ m.sizeLabel }})</option>
+                    <optgroup label="Fast &amp; Lightweight (~255–470 MB)">
+                        <option v-for="m in fastModels" :key="m.id" :value="m.id">{{ m.label }} ({{ m.sizeLabel }})</option>
+                    </optgroup>
+                    <optgroup label="Mid-Size &amp; Reasoning (760 MB–3.6 GB)">
+                        <option v-for="m in largerModels" :key="m.id" :value="m.id">{{ m.label }} ({{ m.sizeLabel }})</option>
+                    </optgroup>
                 </select>
-                <button id="mem-btn" type="button" @click="showMemory = true" title="View conversation memories">
+                <button id="mem-btn" class="btn-sm" type="button" @click="showMemory = true; showSettings = false; showRefs = false;" title="View conversation memories">
                     Memory <span v-if="memories.length" class="mem-badge">{{ memories.length }}</span>
                 </button>
-                <button id="clear-btn" type="button" @click="clearMessages">Clear</button>
+                <button id="clear-btn" class="btn-sm danger" type="button" @click="clearMessages">Clear</button>
             </div>
         </div>
 
@@ -364,14 +458,21 @@
                 <div class="progress-track">
                     <div class="progress-fill" :style="{ width: loadingProgress + '%' }"></div>
                 </div>
-                <div style="font-size: 0.78rem; color: #6b7280; margin-top: 8px;">{{ deviceInfo }}</div>
-                <button v-if="loadError" class="btn-sm primary" type="button" style="margin-top: 14px;" @click="switchModel">Retry Model Load</button>
+                <div style="font-size: 0.78rem; color: #4b5563; margin-top: 8px;">{{ progressDetail || deviceInfo }}</div>
+                <button v-if="loadError" id="retry-btn" class="btn-sm primary" type="button" style="margin-top: 14px;" @click="switchModel">Retry Model Load</button>
             </div>
 
             <div id="chat-container" ref="chatContainer">
                 <div v-for="msg in messages"
                      :key="msg.id"
-                     :class="['message', msg.role + '-message']">{{ msg.content }}</div>
+                     :class="['message', msg.role === 'user' ? 'user-message' : 'bot-message']">
+                    <template v-if="msg.role === 'user'">{{ msg.content }}</template>
+                    <div v-else v-html="formatBotMessage(msg)"></div>
+                </div>
+
+                <div v-if="!hasUserTurns && !isLoading && !isGenerating" class="suggestions-row">
+                    <button v-for="prompt in starterPrompts" :key="prompt" type="button" class="suggestion-chip" @click="useStarterPrompt(prompt)">{{ prompt }}</button>
+                </div>
             </div>
         </div>
 
@@ -392,12 +493,19 @@
                 :disabled="isGenerating || isLoading"
                 :class="{ recording: isRecording }"
                 :title="isRecording ? 'Stop voice input' : 'Start voice input'"
-            >{{ isRecording ? 'Stop' : 'Mic' }}</button>
+            >{{ isRecording ? 'Stop Mic' : 'Mic' }}</button>
             <button
+                v-if="isGenerating"
+                id="stop-btn"
+                type="button"
+                @click="stopGeneration"
+            >Stop</button>
+            <button
+                v-else
                 id="send-btn"
                 type="button"
                 @click="sendMessage"
-                :disabled="isGenerating || isLoading || !inputText.trim()"
+                :disabled="isLoading || !inputText.trim()"
             >Send</button>
         </div>
 
