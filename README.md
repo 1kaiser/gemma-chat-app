@@ -404,9 +404,11 @@ MIT License - feel free to use this project for learning and development!
 - **Chrome Developer Relations** - WebGPU and WebAssembly AI performance enhancements
 
 ### Key Academic References
-- Ruan, C.F., Qin, Y., Zhou, X., et al. (2024). "WebLLM: A High-Performance In-Browser LLM Inference Engine." arXiv:2412.15803
-- Google DeepMind (2024). "Gemma 3: Google's new open model based on Gemini 2.0"
-- Chrome for Developers (2024). "WebAssembly and WebGPU enhancements for faster Web AI"
+- Gemma Team, Google DeepMind (2025). *Gemma 3 Technical Report*. [arXiv:2503.19786](https://arxiv.org/abs/2503.19786).
+- Supported ONNX Models: [`gemma-3-270m-it-ONNX`](https://huggingface.co/onnx-community/gemma-3-270m-it-ONNX), [`gemma-3-1b-it-ONNX`](https://huggingface.co/onnx-community/gemma-3-1b-it-ONNX), [`gemma-4-E2B-it-ONNX`](https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX), [`granite-4.0-350m-ONNX-web`](https://huggingface.co/onnx-community/granite-4.0-350m-ONNX-web).
+- Ruan, C.F., Qin, Y., Zhou, X., et al. (2024). "WebLLM: A High-Performance In-Browser LLM Inference Engine." [arXiv:2412.15803](https://arxiv.org/abs/2412.15803).
+- [Hugging Face Transformers.js v4](https://huggingface.co/docs/transformers.js) & [ONNX Runtime Web](https://onnxruntime.ai/).
+- Part of [1kaiser.github.io](https://1kaiser.github.io/).
 
 ### Community Inspiration  
 - **Browser AI Community** - Pioneering local inference and privacy-first approaches

@@ -1,4 +1,6 @@
 import { defineConfig } from 'vite';
+import fs from 'fs';
+import path from 'path';
 
 export default defineConfig({
   base: '/gemma-chat-app/',
@@ -9,6 +11,36 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
   },
+  plugins: [
+    {
+      name: 'model-cache-headers',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url?.includes('/models/')) {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+          }
+          next();
+        });
+      },
+    },
+    {
+      name: 'onnx-not-found',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (/\.(onnx|onnx_data)(\?.*)?$/.test(req.url ?? '')) {
+            const url = req.url.split('?')[0].replace('/gemma-chat-app', '');
+            const filePath = path.join(process.cwd(), 'public', url);
+            if (!fs.existsSync(filePath)) {
+              res.writeHead(404, { 'Content-Type': 'text/plain' });
+              res.end('Not found');
+              return;
+            }
+          }
+          next();
+        });
+      },
+    },
+  ],
   optimizeDeps: {
     exclude: ['@huggingface/transformers'],
   },
